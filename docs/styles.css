@@ -31,7 +31,7 @@ body {
 }
 
 a { color: inherit; text-underline-offset: .2em; }
-img { display: block; max-width: 100%; }
+img { display: block; max-width: 100%; height: auto; }
 
 .skip-link {
   position: fixed;
