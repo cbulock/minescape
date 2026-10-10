@@ -10,7 +10,7 @@ android {
     compileSdk = 36
     compileSdkMinor = 1
     defaultConfig {
-        applicationId = "com.camer.minesweeper"
+        applicationId = "com.cbulock.minescape"
         minSdk = 26
         targetSdk = 36
         versionCode = 4

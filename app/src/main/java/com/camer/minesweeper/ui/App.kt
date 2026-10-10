@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -155,23 +154,8 @@ fun MinesweeperApp(model: GameViewModel) {
     }
     when (page) {
         "stats" -> data?.let { StatisticsScreen(it, ::closePage) }
-        "daily" -> FullPage("Daily challenges", ::closePage) {
-            Text("One shared intermediate puzzle each day. The date changes at midnight UTC. Your first attempt counts; replays are practice.")
-            Button(onClick = { daily(model.today()) }, modifier = Modifier.fillMaxWidth()) { Text("Today's challenge · ${model.today()}") }
-            data?.dailyGame?.takeIf { !it.finished }?.let { g ->
-                OutlinedButton(onClick = { model.switchSlot(ActiveSlot.DAILY); showGame() }, modifier = Modifier.fillMaxWidth()) { Text("Resume ${g.dailyDate}") }
-            }
-            data?.dailyRecords.orEmpty().toSortedMap(reverseOrder()).forEach { (date, record) ->
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) { Text(date, fontWeight = FontWeight.Bold); Text(dailyOutcome(record.outcome) + " · " + formatTime(record.elapsedMillis)) }
-                    Column(horizontalAlignment = Alignment.End) {
-                        TextButton(onClick = { daily(date) }) { Text(if (record.outcome == DailyOutcome.IN_PROGRESS) "Resume" else "Practice") }
-                        if (record.outcome == DailyOutcome.WON || record.outcome == DailyOutcome.LOST) ShareResultButton(record)
-                    }
-                }
-            }
-            if (data?.dailyRecords.isNullOrEmpty()) Text("Your daily results will appear here.")
-        }
+        "daily" -> data?.let { DailyChallengesScreen(it, model.today(), ::daily,
+            onResume = { model.switchSlot(ActiveSlot.DAILY); showGame() }, onClose = ::closePage) }
         "settings" -> data?.preferences?.let { preferences ->
             SettingsScreen(preferences, model::preferences, ::closePage,
                 onExport = { pickerOpen = true; exporter.launch("minescape-${model.today()}.json") },
@@ -342,22 +326,3 @@ internal fun ProgressDialog(message: String, onCancel: () -> Unit) {
 
 private data class StartRequest(val config: BoardConfig? = null, val generation: GenerationMode = GenerationMode.CLASSIC,
     val practice: Boolean = false, val dailyDate: String? = null, val practiceDate: String? = null)
-
-private fun dailyOutcome(value: DailyOutcome) = when (value) {
-    DailyOutcome.IN_PROGRESS -> "In progress"; DailyOutcome.WON -> "Won"; DailyOutcome.LOST -> "Lost"; DailyOutcome.ABANDONED -> "Abandoned"
-}
-
-@Composable
-private fun FullPage(title: String, onClose: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(Modifier.safeDrawingPadding().fillMaxSize().padding(16.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-                    TextButton(onClick = onClose) { Text("Done") }
-                }
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp), content = content)
-            }
-        }
-    }
-}

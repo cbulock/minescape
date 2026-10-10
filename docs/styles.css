@@ -123,12 +123,6 @@ h1 em { color: var(--purple); font-style: normal; }
 .button-secondary { border-color: rgba(101, 84, 217, .25); color: var(--purple); background: rgba(255, 255, 255, .55); }
 .button-light { color: var(--ink); background: white; }
 
-.quick-facts { margin: 0; display: flex; flex-wrap: wrap; gap: 30px; }
-.quick-facts div { padding-right: 30px; border-right: 1px solid rgba(74, 69, 112, .18); }
-.quick-facts div:last-child { padding-right: 0; border: 0; }
-.quick-facts dt { color: var(--muted); font-size: .72rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
-.quick-facts dd { margin: 2px 0 0; font-weight: 760; }
-
 .hero-visual { position: relative; min-height: 570px; display: grid; place-items: center; }
 .phone { position: relative; z-index: 2; margin: 0; overflow: hidden; border: 9px solid #202030; border-radius: 42px; background: var(--night); box-shadow: var(--shadow); }
 .phone-main { width: min(310px, 68vw); transform: rotate(3.5deg); }
@@ -223,8 +217,6 @@ footer p { color: var(--muted); font-size: .9rem; }
   .nav-github { padding: 8px 12px; }
   .hero { width: calc(100% - 20px); margin-top: 8px; padding: 48px 24px 30px; border-radius: 28px; }
   h1 { font-size: clamp(2.75rem, 15vw, 4rem); }
-  .quick-facts { gap: 16px; }
-  .quick-facts div { padding-right: 16px; }
   .hero-visual { min-height: 450px; }
   .phone-main { width: 235px; }
   .orbit-one { width: 390px; height: 390px; }

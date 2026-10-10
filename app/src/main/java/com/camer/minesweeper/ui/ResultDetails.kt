@@ -137,8 +137,11 @@ internal fun ResultDetailsDialog(
                                 else "Same mines and opening. Clock and markers reset; records stay unchanged.",
                                 style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                         }
-                        if (official != null) ShareResultButton(official, Modifier.fillMaxWidth().heightIn(min = 48.dp), outlined = true)
                     }
+                }
+                if (official != null) {
+                    Spacer(Modifier.height(12.dp))
+                    ShareResultButton(official, Modifier.fillMaxWidth().heightIn(min = 48.dp), outlined = true)
                 }
             }
         }
