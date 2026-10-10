@@ -145,14 +145,14 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                     val mineShown = cell.mine && game.finished
                     val wrongFlag = cell.flagged && !cell.mine && game.status == GameStatus.LOST
                     val fill = when {
-                        index == game.explodedIndex -> Coral
-                        wrongFlag -> if (dark) Color(0xFF693D41) else Color(0xFFFFDAD4)
-                        cell.flagged -> if (dark) Color(0xFF51456B) else Color(0xFFFFE3DA)
-                        mineShown -> if (dark) Color(0xFF4A3D56) else Color(0xFFE7DFF4)
-                        cell.revealed -> if (dark) Color(0xFF20222D) else Color(0xFFF7F8FC)
-                        else -> if (dark) Color(0xFF45415E) else Color(0xFFDBD5F5)
+                        index == game.explodedIndex -> colors.errorContainer
+                        wrongFlag -> colors.errorContainer
+                        cell.flagged -> colors.tertiaryContainer
+                        mineShown -> colors.secondaryContainer
+                        cell.revealed -> colors.surface
+                        else -> colors.primaryContainer
                     }
-                    if (!cell.revealed) drawRoundRect(if (dark) Color(0xFF12121C) else Color(0xFFC4BCE8), origin + Offset(0f, cellSize * .035f), tileSize, rounding)
+                    if (!cell.revealed) drawRoundRect(colors.outlineVariant, origin + Offset(0f, cellSize * .035f), tileSize, rounding)
                     drawRoundRect(fill, origin, tileSize, rounding)
                     if (index == pendingTarget || index == hintIndex) drawRoundRect(colors.primary, origin, tileSize, rounding,
                         style = Stroke((2 * density).coerceAtMost(cellSize * .1f)))
@@ -166,20 +166,20 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                                 lineTo(x + cellSize * .73f, y + cellSize * .53f)
                                 lineTo(x + cellSize * .43f, y + cellSize * .53f); close()
                             }
-                            drawPath(flag, if (dark) Coral else Color(0xFFD04B3D))
-                            drawLine(if (dark) Color.White else Ink, Offset(x + cellSize * .4f, y + cellSize * .23f), Offset(x + cellSize * .4f, y + cellSize * .75f), cellSize * .055f)
-                            drawLine(if (dark) Color.White else Ink, Offset(x + cellSize * .28f, y + cellSize * .76f), Offset(x + cellSize * .58f, y + cellSize * .76f), cellSize * .055f)
+                            drawPath(flag, colors.onTertiaryContainer)
+                            drawLine(colors.onTertiaryContainer, Offset(x + cellSize * .4f, y + cellSize * .23f), Offset(x + cellSize * .4f, y + cellSize * .75f), cellSize * .055f)
+                            drawLine(colors.onTertiaryContainer, Offset(x + cellSize * .28f, y + cellSize * .76f), Offset(x + cellSize * .58f, y + cellSize * .76f), cellSize * .055f)
                         }
                         mineShown -> {
-                            val ink = if (dark) Color(0xFFF1DDEA) else Ink
+                            val ink = if (index == game.explodedIndex) colors.onErrorContainer else colors.onSecondaryContainer
                             drawCircle(ink, cellSize * .17f, center)
                             for (v in listOf(Offset(1f, 0f), Offset(0f, 1f), Offset(.7f, .7f), Offset(.7f, -.7f)))
                                 drawLine(ink, center - v * cellSize * .27f, center + v * cellSize * .27f, cellSize * .05f)
                             drawCircle(Color.White, cellSize * .04f, center + Offset(-cellSize * .055f, -cellSize * .055f))
                         }
                         wrongFlag -> {
-                            drawLine(Coral, center - Offset(cellSize * .17f, cellSize * .17f), center + Offset(cellSize * .17f, cellSize * .17f), cellSize * .06f)
-                            drawLine(Coral, center - Offset(-cellSize * .17f, cellSize * .17f), center + Offset(-cellSize * .17f, cellSize * .17f), cellSize * .06f)
+                            drawLine(colors.onErrorContainer, center - Offset(cellSize * .17f, cellSize * .17f), center + Offset(cellSize * .17f, cellSize * .17f), cellSize * .06f)
+                            drawLine(colors.onErrorContainer, center - Offset(-cellSize * .17f, cellSize * .17f), center + Offset(-cellSize * .17f, cellSize * .17f), cellSize * .06f)
                         }
                         cell.questioned && !game.finished -> {
                             paint.textSize = cellSize * .52f

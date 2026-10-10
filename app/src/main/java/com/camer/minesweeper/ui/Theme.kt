@@ -1,9 +1,11 @@
 package com.camer.minesweeper.ui
 
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.camer.minesweeper.data.ThemeMode
 
 val Violet = Color(0xFF6554D9)
@@ -31,5 +33,11 @@ private val Dark = darkColorScheme(
 @Composable
 fun MinesweeperTheme(mode: ThemeMode, content: @Composable () -> Unit) {
     val dark = mode == ThemeMode.DARK || (mode == ThemeMode.SYSTEM && isSystemInDarkTheme())
-    MaterialTheme(colorScheme = if (dark) Dark else Light, content = content)
+    val colors = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val context = LocalContext.current
+        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        if (dark) Dark else Light
+    }
+    MaterialTheme(colorScheme = colors, content = content)
 }

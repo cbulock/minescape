@@ -29,7 +29,7 @@ A small, offline Minesweeper game built with Kotlin, Jetpack Compose, and Materi
 - **Share result** on a finished official daily attempt or in daily history opens Android's share chooser with a PNG card and text showing date (UTC), outcome, and time. It includes no board layout or moves. Practice does not produce an official share result. Sharing grants read access only to the generated card through a non-exported file provider.
 - Settings offers **Export progress** and **Import progress** through the Android document picker. Backups include both slots, preferences, statistics, histories, and undo. Imports validate before showing a preview and asking to replace progress; invalid files and failed writes preserve current progress. Maximum file size: 16 MiB.
 - Settings uses a full-screen layout with appearance, controls, and backup cards, a fixed Done action, and a centered reading width on tablets. Toggle rows are tappable, theme choices stack with large text, and hold-duration choices wrap. Preferences save as you change them.
-- Light, dark, and device themes; optional haptics; accessible cell labels/actions. Compose animations follow the device animation scale.
+- Light, dark, and device themes, with Material You wallpaper colors on Android 12 and later across screens and board tiles (the original palette on older Android versions); optional haptics; accessible cell labels/actions. Board numbers retain distinct colors for readability. Compose animations follow the device animation scale.
 
 ## Build and install
 

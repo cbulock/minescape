@@ -1,5 +1,6 @@
 package com.camer.minesweeper.ui
 
+import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -64,6 +65,9 @@ internal fun SettingsScreen(
                                         ThemeMode.LIGHT -> "Always use a light background."
                                         ThemeMode.DARK -> "Always use a dark background."
                                     })
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                        SettingsDescription("Colors follow your device’s wallpaper palette.")
+                                    }
                                 }
                             }
                         }
