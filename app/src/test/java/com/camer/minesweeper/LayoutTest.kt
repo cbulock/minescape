@@ -36,6 +36,7 @@ class LayoutTest {
                 else compose.onAllNodesWithTag("board").fetchSemanticsNodes().isNotEmpty()
             }
             if (!home) {
+                if (end != null) compose.onNodeWithText("View board").performClick()
                 compose.onNodeWithText("Fit board").assertIsDisplayed()
                 compose.onNodeWithTag("board").assertIsDisplayed()
                 val bounds = compose.onNodeWithTag("board").fetchSemanticsNode().boundsInRoot
@@ -43,7 +44,8 @@ class LayoutTest {
                 val minimumFraction = if (end == null) .65f else .5f
                 check(bounds.height > screen.height * minimumFraction) { "Board must dominate the screen: $bounds in $screen" }
                 check(bounds.width > screen.width * .9f) { "Board must use the screen width: $bounds in $screen" }
-                compose.onNodeWithContentDescription("Flag mode").assertIsDisplayed()
+                if (end == null) compose.onNodeWithContentDescription("Flag mode").assertIsDisplayed()
+                else compose.onNodeWithContentDescription("Flag mode").assertDoesNotExist()
                 compose.onNodeWithContentDescription("Open menu").assertIsDisplayed()
             }
             compose.waitForIdle()
@@ -54,10 +56,26 @@ class LayoutTest {
                 val folder = File("build/outputs/screenshots").apply { mkdirs() }
                 File(folder, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
             }
+            if (home) {
+                val screen = compose.onRoot().fetchSemanticsNode().boundsInRoot
+                listOf("Beginner", "Intermediate", "Expert", "Make a custom board", "Daily challenge", "Learn to play", "Statistics").forEach { label ->
+                    val node = compose.onNodeWithText(label).performScrollTo().assertIsDisplayed()
+                    val bounds = node.fetchSemanticsNode().boundsInRoot
+                    check(bounds.left >= screen.left && bounds.right <= screen.right) { "$label exceeds screen width: $bounds in $screen" }
+                }
+                compose.onNodeWithContentDescription("Game options").performScrollTo().performClick()
+                compose.onNodeWithContentDescription("Practice mode").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithContentDescription("No-guess presets").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Done").performClick()
+            }
         }
     }
 
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun smallPhoneHome() = render("phone-home", home = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun darkHome() = render("phone-home-dark", home = true, dark = true)
+    @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi") fun landscapeHome() = render("phone-home-landscape", home = true)
+    @Test @Config(qualifiers = "w800dp-h1280dp-xhdpi") fun tabletHome() = render("tablet-home", home = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun largeTextHome() { RuntimeEnvironment.setFontScale(2f); render("phone-home-large-text", home = true) }
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun smallPhoneLight() = render("phone-light")
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun smallPhoneDark() = render("phone-dark", dark = true)
     @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi") fun phoneLandscape() = render("phone-landscape")

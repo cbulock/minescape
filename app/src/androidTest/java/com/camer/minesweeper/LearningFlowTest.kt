@@ -61,7 +61,7 @@ class LearningFlowTest {
             val lost = engine.reveal(opening, opening.cells.indexOfFirst { it.mine }).copy(elapsedMillis = 62000)
             val old = AppData(game = lost).recordResult()
             initialize(scenario, old)
-            compose.onNodeWithText("Retry same board").performClick()
+            compose.onNodeWithText("Retry same board in practice").performScrollTo().performClick()
             waitFor { saved().game?.id != lost.id }
             val retry = saved().game!!
             assertEquals(PlayMode.PRACTICE, retry.mode); assertEquals(opening.cells, retry.cells)
@@ -72,7 +72,7 @@ class LearningFlowTest {
             compose.onNodeWithText("Done").performClick()
             model.cell(CellIntent(retry.id, retry.cells.indexOfFirst { it.mine }, CellAction.REVEAL, false))
             waitFor { saved().game?.status == GameStatus.LOST }
-            compose.onNodeWithText("Undo").performClick()
+            compose.onNodeWithText("Undo").performScrollTo().performClick()
             waitFor { saved().game?.status == GameStatus.PLAYING }
             assertEquals(retry.cells, saved().game!!.cells); assertEquals(old.results, saved().results)
         }
@@ -109,10 +109,19 @@ class LearningFlowTest {
             val data = AppData(game = game.copy(elapsedMillis = 10000), statistics = mapOf(Difficulty.BEGINNER to Statistics(wins = 1, bestMillis = 12000))).recordResult()
             initialize(scenario, data)
             compose.onNodeWithText("New personal best").assertIsDisplayed()
-            compose.onNodeWithText("Result details").performClick()
+            compose.onNodeWithTag("game-result").assertIsDisplayed()
             compose.onNodeWithText("Previous best 00:12").assertIsDisplayed()
-            compose.onNodeWithText("Done").performClick()
+            compose.onNodeWithText("View board").performClick()
+            menu("New game")
+            compose.waitForIdle()
+            scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            compose.waitForIdle()
+            waitFor { compose.onAllNodesWithText("View result").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("game-result").assertDoesNotExist()
             scenario.recreate()
+            waitFor { compose.onAllNodesWithText("View result").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("game-result").assertDoesNotExist()
+            compose.onNodeWithText("View result").performClick()
             compose.onNodeWithText("New personal best").assertIsDisplayed()
             assertEquals(2, saved().statistics[Difficulty.BEGINNER]?.wins)
         }

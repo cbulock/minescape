@@ -4,6 +4,8 @@ Generated with the built-in image generation tool. The original transparent artw
 
 Android uses a violet background (#6554D9), the artwork inset by 20% in its adaptive foreground, and a matching vector monochrome tile/flag emblem for themed launchers. Both manifest icon references use `@mipmap/ic_minescape`. The previous icon is preserved as `docs/design/ic-launcher-previous.xml`.
 
+The home/new-game header reuses the same transparent artwork in a 44 dp rounded violet tile beside the Minescape title. It is decorative for accessibility and retains the existing large-text layout behavior.
+
 ## Generation prompt
 
 Use case: logo-brand.

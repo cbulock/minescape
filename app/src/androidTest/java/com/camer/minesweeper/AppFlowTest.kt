@@ -57,6 +57,9 @@ class AppFlowTest {
             scenario.onActivity { activity -> repository = GameRepository(activity); runBlocking { repository.update { AppData() } } }
             compose.waitUntil(10000) { compose.waitForIdle(); compose.onAllNodesWithText("Beginner").fetchSemanticsNodes().isNotEmpty() }
             screenshot("01-home")
+            compose.onNodeWithText("Statistics").performScrollTo().performClick()
+            compose.onNodeWithText("Done").performClick()
+            compose.onNodeWithText("Beginner").performScrollTo()
             compose.onNodeWithText("Beginner").performClick()
             awaitSave { it.game != null }
             compose.onNodeWithTag("cell-40").performTouchInput { click() }
@@ -89,6 +92,10 @@ class AppFlowTest {
             screenshot("04-landscape")
             scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
             compose.waitForIdle()
+            menu("New game")
+            compose.onNodeWithText("Back to current game").performClick()
+            compose.onNodeWithTag("board").assertIsDisplayed()
+            assertEquals(original.id, saved().game!!.id)
             menu("New game")
             compose.onNodeWithText("Expert").performScrollTo().performClick()
             compose.onNodeWithText("Replace current game?").assertExists()

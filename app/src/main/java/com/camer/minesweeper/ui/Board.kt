@@ -32,7 +32,8 @@ import kotlin.math.roundToInt
 
 @Composable
 fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Unit, modifier: Modifier = Modifier, controls: @Composable RowScope.() -> Unit = {}, inputEnabled: Boolean = true, hintIndex: Int? = null,
-    holdMillis: Long? = null, tapToChord: Boolean = true, questionMarks: Boolean = false, tagPrefix: String = "") {
+    holdMillis: Long? = null, tapToChord: Boolean = true, questionMarks: Boolean = false, tagPrefix: String = "",
+    effectsEnabled: Boolean = inputEnabled) {
     var viewport by remember(game.id) { mutableStateOf(game.viewport) }
     var area by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current.density
@@ -63,9 +64,10 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
             .pointerInput(game.id, game.flagMode, game.finished, inputEnabled, area, density, game.viewport, holdMillis, tapToChord, questionMarks) {
                 awaitEachGesture {
                     val first = awaitFirstDown(requireUnconsumed = true)
-                    if (!inputEnabled || game.finished) return@awaitEachGesture
+                    if (!inputEnabled) return@awaitEachGesture
                     val anchorGeometry = currentGeometry
-                    val anchor = anchorGeometry.hit(first.position.x / currentDensity, first.position.y / currentDensity)
+                    // Completed rounds have no cell target, but still accept viewport gestures.
+                    val anchor = if (game.finished) null else anchorGeometry.hit(first.position.x / currentDensity, first.position.y / currentDensity)
                     if (anchorGeometry.cell < 32f && anchor != null) {
                         viewport = anchorGeometry.transform(32f / anchorGeometry.cell, 0f, 0f,
                             first.position.x / currentDensity, first.position.y / currentDensity)
@@ -216,6 +218,7 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                         }.testTag("${tagPrefix}cell-$index"))
                 }
             }
+            ResultEffects(game, geometry, effectsEnabled)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             IconButton(onClick = {

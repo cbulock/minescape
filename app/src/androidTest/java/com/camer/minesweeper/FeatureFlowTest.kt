@@ -26,6 +26,7 @@ class FeatureFlowTest {
     private fun saved() = runBlocking { repository.data.first() }
     private fun waitFor(predicate: () -> Boolean) = compose.waitUntil(15000) { compose.waitForIdle(); predicate() }
     private fun menu(label: String) {
+        if (compose.onAllNodesWithTag("game-result").fetchSemanticsNodes().isNotEmpty()) compose.onNodeWithText("View board").performClick()
         compose.onNodeWithContentDescription("Open menu").performClick()
         compose.onAllNodesWithText(label).onLast().performClick()
     }
@@ -39,8 +40,10 @@ class FeatureFlowTest {
     @Test fun practiceControlsUndoLossAndHintsDoNotRecordScores() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             initialize(scenario)
+            compose.onNodeWithContentDescription("Game options").performClick()
             compose.onNodeWithContentDescription("Practice mode").performClick()
             waitFor { saved().preferences.practice }
+            compose.onNodeWithText("Done").performClick()
             compose.onNodeWithText("Beginner").performScrollTo().performClick()
             waitFor { saved().game?.mode == PlayMode.PRACTICE }
             compose.onNodeWithTag("cell-40").performClick()
@@ -52,7 +55,7 @@ class FeatureFlowTest {
             val before = saved().game!!
             model.cell(CellIntent(before.id, before.cells.indexOfFirst { it.mine }, CellAction.REVEAL, before.flagMode))
             waitFor { saved().game?.status == GameStatus.LOST }
-            compose.onNodeWithText("Undo").performClick()
+            compose.onNodeWithText("Undo").performScrollTo().performClick()
             waitFor { saved().game?.status == GameStatus.PLAYING }
             assertEquals(before.cells, saved().game!!.cells)
             assertEquals(1, saved().game!!.undosUsed)
@@ -89,6 +92,7 @@ class FeatureFlowTest {
             compose.onNodeWithText("Practice again").performClick()
             compose.onNodeWithText("Keep playing").performClick()
             assertEquals(regular.id, saved().game!!.id)
+            compose.onNodeWithText("View result").performClick()
             compose.onNodeWithText("Practice again").performClick()
             compose.onNodeWithText("Start new game").performClick()
             waitFor { saved().activeSlot == ActiveSlot.REGULAR && saved().game?.mode == PlayMode.PRACTICE }
@@ -97,6 +101,35 @@ class FeatureFlowTest {
             assertEquals(DailyOutcome.LOST, saved().dailyRecords[daily.dailyDate]?.outcome)
         }
     }
+    @Test fun wonDailyChallengeIsNotOfferedForResume() = assertFinishedDailyNotResumable(win = true)
+
+    @Test fun lostDailyChallengeIsNotOfferedForResume() = assertFinishedDailyNotResumable(win = false)
+
+    private fun assertFinishedDailyNotResumable(win: Boolean) {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            val engine = GameEngine(Random(9))
+            val regular = Game(BoardConfig.preset(Difficulty.BEGINNER))
+            initialize(scenario, AppData(game = regular))
+            val date = model.today()
+            model.startDaily(date)
+            waitFor { model.data.value?.activeSlot == ActiveSlot.DAILY }
+            var daily = saved().dailyGame!!
+            if (win) daily.cells.indices.filter { !daily.cells[it].mine }.forEach { daily = engine.reveal(daily, it) }
+            else daily = engine.reveal(daily, daily.cells.indexOfFirst { it.mine })
+            assertEquals(if (win) GameStatus.WON else GameStatus.LOST, daily.status)
+            initialize(scenario, AppData(game = regular, dailyGame = daily, activeSlot = ActiveSlot.DAILY).recordResult())
+            menu("Resume regular game")
+            waitFor { model.data.value?.activeSlot == ActiveSlot.REGULAR }
+            compose.onNodeWithContentDescription("Open menu").performClick()
+            compose.onNodeWithText("Resume daily challenge").assertDoesNotExist()
+            compose.onNodeWithText("Daily challenges").performClick()
+            compose.onNodeWithText("Practice").assertExists()
+            compose.onNodeWithText("Resume $date").assertDoesNotExist()
+            assertEquals(daily.id, saved().dailyGame?.id)
+            assertEquals(if (win) DailyOutcome.WON else DailyOutcome.LOST, saved().dailyRecords[date]?.outcome)
+        }
+    }
+
     @Test fun quickReplayKeepsConfigurationAndRejectsOldGesture() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             val engine = GameEngine(Random(9))
@@ -152,8 +185,10 @@ class FeatureFlowTest {
     @Test fun noGuessUIUsesBackgroundGenerationAndKeepsScoresSeparate() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             initialize(scenario)
+            compose.onNodeWithContentDescription("Game options").performClick()
             compose.onNodeWithContentDescription("No-guess presets").performClick()
             waitFor { saved().preferences.generation == GenerationMode.NO_GUESS }
+            compose.onNodeWithText("Done").performClick()
             compose.onNodeWithText("Beginner").performScrollTo().performClick()
             waitFor { saved().game?.generation == GenerationMode.NO_GUESS }
             compose.onNodeWithTag("cell-40").performClick()

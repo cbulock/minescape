@@ -140,6 +140,82 @@ class BoardGestureTest {
         }
         compose.runOnIdle { assertEquals(0, taps); assertEquals(0, holds); assertNotNull(lastViewport) }
     }
+    @Test fun wonBoardCanPanAndPinchWithoutCellActions() = checkFinishedNavigation(GameStatus.WON)
+    @Test fun lostBoardCanPanAndPinchWithoutCellActions() = checkFinishedNavigation(GameStatus.LOST)
+
+    private fun checkFinishedNavigation(status: GameStatus) {
+        val config = BoardConfig.preset(Difficulty.EXPERT)
+        val game = Game(config, status = status, viewport = Viewport(48f, config.columns / 2f, config.rows / 2f),
+            cells = List(config.size) { Cell(mine = it < config.mines, revealed = status == GameStatus.WON && it >= config.mines) })
+        compose.setContent { MinesweeperTheme(ThemeMode.LIGHT) {
+            Board(game, { intents.add(it) }, { lastViewport = it }, Modifier.width(240.dp).height(400.dp))
+        } }
+        val board = compose.onNodeWithTag("board")
+        compose.onNodeWithTag("cell-${config.columns * (config.rows / 2) + config.columns / 2}").assert(hasNoClickAction())
+        board.performTouchInput { click(); longClick() }
+        compose.runOnIdle { assertTrue(intents.isEmpty()); assertNull(lastViewport) }
+        // Even a stationary hold followed by a drag must remain available for inspection.
+        board.performTouchInput {
+            down(center); advanceEventTime(800); moveTo(center + Offset(60f, 30f), delayMillis = 50); up()
+        }
+        compose.runOnIdle {
+            assertNotNull(lastViewport)
+            assertTrue(lastViewport!!.centerColumn < game.viewport.centerColumn)
+            assertTrue(lastViewport!!.centerRow < game.viewport.centerRow)
+        }
+        board.performTouchInput {
+            down(0, center - Offset(20f, 0f)); down(1, center + Offset(20f, 0f))
+            moveTo(0, center - Offset(40f, 0f), delayMillis = 100)
+            moveTo(1, center + Offset(40f, 0f), delayMillis = 100)
+            up(0); up(1)
+        }
+        compose.runOnIdle { assertTrue(lastViewport!!.cellDp > 48f); assertTrue(intents.isEmpty()) }
+        compose.onNodeWithText("Fit board").performClick()
+        compose.runOnIdle { assertEquals(0f, lastViewport!!.cellDp) }
+    }
+
+    @Test fun finishedTinyBoardPinchZoomsWithoutTapToZoomInterception() {
+        val config = BoardConfig(50, 50, 875)
+        compose.setContent { MinesweeperTheme(ThemeMode.LIGHT) {
+            Board(Game(config, status = GameStatus.LOST), { intents.add(it) }, { lastViewport = it },
+                Modifier.width(240.dp).height(400.dp))
+        } }
+        compose.onNodeWithTag("board").performTouchInput {
+            down(0, center - Offset(20f, 0f)); down(1, center + Offset(20f, 0f))
+            moveTo(0, center - Offset(60f, 0f), delayMillis = 100)
+            moveTo(1, center + Offset(60f, 0f), delayMillis = 100)
+            up(0); up(1)
+        }
+        compose.runOnIdle {
+            assertNotNull(lastViewport)
+            assertTrue(lastViewport!!.cellDp > 5f)
+            assertTrue(lastViewport!!.cellDp < 32f)
+            assertTrue(intents.isEmpty())
+        }
+    }
+
+    @Test fun finishingMidPressCancelsCellActionAndAllowsFreshDrag() {
+        var game by mutableStateOf(Game(BoardConfig.preset(Difficulty.EXPERT), viewport = Viewport(48f, 15f, 8f)))
+        compose.setContent { MinesweeperTheme(ThemeMode.LIGHT) {
+            Board(game, { intents.add(it) }, { lastViewport = it }, Modifier.width(240.dp).height(400.dp))
+        } }
+        val board = compose.onNodeWithTag("board")
+        board.performTouchInput { down(center); advanceEventTime(100) }
+        compose.runOnIdle { game = game.copy(status = GameStatus.LOST) }
+        board.performTouchInput { advanceEventTime(800); up() }
+        compose.runOnIdle { assertTrue(intents.isEmpty()); assertNull(lastViewport) }
+        board.performTouchInput { swipe(center, center + Offset(60f, 0f)) }
+        compose.runOnIdle { assertNotNull(lastViewport); assertTrue(intents.isEmpty()) }
+    }
+
+    @Test fun disabledFinishedBoardRejectsViewportGestures() {
+        compose.setContent { MinesweeperTheme(ThemeMode.LIGHT) {
+            Board(Game(BoardConfig.preset(Difficulty.EXPERT), status = GameStatus.WON, viewport = Viewport(48f, 15f, 8f)),
+                { intents.add(it) }, { lastViewport = it }, Modifier.width(240.dp).height(400.dp), inputEnabled = false)
+        } }
+        compose.onNodeWithTag("board").performTouchInput { swipe(center, center + Offset(60f, 0f)) }
+        compose.runOnIdle { assertNull(lastViewport); assertTrue(intents.isEmpty()) }
+    }
     @Test fun coveredCellsExposeNoMineInformationAndSupportAccessibility() {
         launch()
         compose.onNodeWithTag("cell-40").assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Covered"))

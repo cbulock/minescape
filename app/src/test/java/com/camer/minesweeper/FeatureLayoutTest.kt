@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.net.Uri
 import android.view.inspector.WindowInspector
 import androidx.compose.ui.test.*
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
@@ -60,8 +61,18 @@ class FeatureLayoutTest {
                     check(cell.width >= 64f) { "Lesson cells should be at least 32 dp on these xhdpi screens: $cell" }
                 }
                 "result" -> {
-                    compose.onNodeWithText("Result details").performClick()
-                    compose.onNodeWithText("Previous best 01:45").assertIsDisplayed()
+                    compose.onNodeWithTag("game-result").assertIsDisplayed()
+                    compose.onNodeWithText("Result details").assertDoesNotExist()
+                    if (won) compose.onNodeWithText("Previous best 01:45").performScrollTo().assertIsDisplayed()
+                    val action = if (daily) "Practice again" else "Retry same board in practice"
+                    val button = compose.onNode(hasText(action) and hasAnyAncestor(isDialog()))
+                    button.performScrollTo().assertIsDisplayed()
+                    val bounds = button.fetchSemanticsNode().boundsInRoot
+                    val root = compose.onNode(isDialog()).fetchSemanticsNode().boundsInRoot
+                    check(bounds.left >= root.left && bounds.right <= root.right) { "Result action exceeds dialog width" }
+                    compose.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+                        .performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, -10000f) }
+                    compose.onNode(hasText(if (won) "You won" else "Game over") and hasAnyAncestor(isDialog())).assertIsDisplayed()
                 }
                 "controls" -> {
                     compose.onNodeWithContentDescription("Open menu").performClick()
@@ -77,9 +88,10 @@ class FeatureLayoutTest {
                     compose.onNodeWithText("Replace progress").assertIsDisplayed()
                 }
                 null -> {
+                    if (game.finished) compose.onNodeWithText("View board").performClick()
                     compose.onNodeWithTag("board").assertIsDisplayed()
                     compose.onNodeWithText("Fit board").assertIsDisplayed()
-                    if (practice) {
+                    if (practice && !lost) {
                         compose.onNodeWithText("Undo").assertIsDisplayed()
                         if (!lost) compose.onNodeWithText("Hint").assertIsDisplayed()
                     }
@@ -116,5 +128,10 @@ class FeatureLayoutTest {
     @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi") fun tutorialLandscape() = render("learning-tutorial-landscape", screen = "tutorial")
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun tutorialLargeText() = render("learning-tutorial-large-text", screen = "tutorial", largeText = true)
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun recordDetails() = render("learning-personal-best", screen = "result", won = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun lossDetails() = render("result-loss-details", screen = "result", lost = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun practiceDetailsDark() = render("result-practice-details-dark", screen = "result", lost = true, practice = true, dark = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun resultDetailsLargeText() = render("result-details-large-text", screen = "result", won = true, largeText = true)
+    @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi") fun resultDetailsLandscape() = render("result-details-landscape", screen = "result", won = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun dailyResultDetails() = render("result-daily-details", screen = "result", lost = true, daily = true)
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun controlSettings() = render("learning-controls", screen = "controls")
 }
