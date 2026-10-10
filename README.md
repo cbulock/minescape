@@ -2,6 +2,18 @@
 
 A small, offline Minesweeper game built with Kotlin, Jetpack Compose, and Material 3. Android 8.0 (API 26) and later.
 
+## Download
+
+**[Download the latest APK](https://github.com/cbulock/minescape/releases/latest/download/minescape.apk)** · [All APK releases](https://github.com/cbulock/minescape/releases)
+
+Open the APK on your Android device and allow installation from your browser or file manager when prompted. Android 8.0 or later is required. These are debug-signed preview builds, using a stable signing key so updates can replace earlier builds. Each release includes a SHA-256 checksum.
+
+GitHub Actions tests, lints, builds, and publishes an APK after each successful push to `main`. Pull requests run the same checks without publishing a release. The download link becomes available after the first successful build.
+
+Release AABs are built and stored only in the **private [minescape-builds repository](https://github.com/cbulock/minescape-builds/releases)**. Its workflow checks `main` for new commits every 30 minutes (GitHub may delay scheduled runs), skips commits already built, and can be run manually. Bundles and checksums remain in private releases without artifact expiry. The AABs are unsigned; Play Store upload signing and publication are not configured.
+
+The public APK workflow requires the `ANDROID_DEBUG_KEYSTORE_BASE64` Actions secret, containing the existing debug keystore, to preserve update compatibility. The private workflow source is [scripts/private-builds/build-aab.yml](scripts/private-builds/build-aab.yml); install it as `.github/workflows/build-aab.yml` in the private repository. It refuses to upload if that destination is public. GitHub Releases hosts the downloadable files; GitHub Packages does not provide a standalone APK registry.
+
 ## Play
 
 - The home screen groups the three preset boards for one-tap play. **Game options** holds the saved Practice and No-guess switches, with the current mode shown beside it. Custom boards, Daily challenge, learning, and statistics are below; an existing game's return card appears first.

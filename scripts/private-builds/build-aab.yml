@@ -1,0 +1,70 @@
+# Install this workflow in the PRIVATE cbulock/minescape-builds repository only.
+name: Build private AAB
+
+on:
+  schedule:
+    - cron: '17,47 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: private-aab
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Require private destination and find new source commit
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api "repos/$GITHUB_REPOSITORY" --jq .private)" = true || { echo 'AAB destination must be private'; exit 1; }
+          sha="$(gh api repos/cbulock/minescape/commits/main --jq .sha)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          tag="source-$sha"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'build=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'build=true' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        if: steps.source.outputs.build == 'true'
+        with:
+          repository: cbulock/minescape
+          ref: ${{ steps.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        if: steps.source.outputs.build == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        if: steps.source.outputs.build == 'true'
+      - name: Install Android SDK
+        if: steps.source.outputs.build == 'true'
+        run: sdkmanager 'platforms;android-36.1' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+        if: steps.source.outputs.build == 'true'
+      - name: Build release bundle
+        if: steps.source.outputs.build == 'true'
+        run: bash ./gradlew --no-daemon lintRelease bundleRelease
+      - name: Store AAB in private release
+        if: steps.source.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          RELEASE_TAG: ${{ steps.source.outputs.tag }}
+        run: |
+          # Recheck visibility immediately before uploading.
+          test "$(gh api "repos/$GITHUB_REPOSITORY" --jq .private)" = true
+          mkdir -p dist
+          cp app/build/outputs/bundle/release/app-release.aab dist/minescape-release.aab
+          (cd dist && sha256sum minescape-release.aab > minescape-release.aab.sha256)
+          printf 'Unsigned release AAB from cbulock/minescape commit %s. Configure a Play upload signing key before store submission.\n' "$SOURCE_SHA" > "$RUNNER_TEMP/aab-notes.md"
+          gh release create "$RELEASE_TAG" dist/minescape-release.aab dist/minescape-release.aab.sha256 --repo "$GITHUB_REPOSITORY" --target main --title "Minescape AAB ${SOURCE_SHA:0:7}" --notes-file "$RUNNER_TEMP/aab-notes.md" --latest
