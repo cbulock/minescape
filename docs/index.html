@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6554d9">
+  <meta name="description" content="Minescape is a thoughtful, offline Minesweeper game for Android with daily challenges, no-guess boards, practice tools, and local statistics.">
+  <meta property="og:title" content="Minescape for Android">
+  <meta property="og:description" content="Classic Minesweeper, shaped for modern Android.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cbulock.github.io/minescape/">
+  <meta property="og:image" content="https://cbulock.github.io/minescape/assets/minescape-preview.png">
+  <title>Minescape for Android</title>
+  <link rel="icon" href="assets/minescape-icon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Minescape home">
+      <img src="assets/minescape-icon.png" alt="" width="44" height="44">
+      <span>Minescape</span>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="#features">Features</a>
+      <a href="#details">Details</a>
+      <a href="privacy.html">Privacy</a>
+      <a class="nav-github" href="https://github.com/cbulock/minescape">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> Made for Android</p>
+        <h1>Classic Minesweeper,<br><em>made more thoughtful.</em></h1>
+        <p class="hero-lede">A polished, offline puzzle game with safe touch controls, daily challenges, no-guess boards, and room to learn at your own pace.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="https://github.com/cbulock/minescape">View on GitHub <span aria-hidden="true">→</span></a>
+          <a class="button button-secondary" href="#features">Explore features</a>
+        </div>
+        <dl class="quick-facts" aria-label="App details">
+          <div><dt>Platform</dt><dd>Android 8.0+</dd></div>
+          <div><dt>Connection</dt><dd>Not required</dd></div>
+          <div><dt>Accounts</dt><dd>None</dd></div>
+        </dl>
+      </div>
+
+      <div class="hero-visual" aria-label="Minescape game preview">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <figure class="phone phone-main">
+          <img src="assets/game-dark.png" alt="A Minescape game board in dark mode" width="720" height="1280">
+        </figure>
+        <div class="floating-tile tile-flag" aria-hidden="true">🚩</div>
+        <div class="floating-tile tile-one" aria-hidden="true">1</div>
+        <div class="floating-tile tile-mine" aria-hidden="true">✦</div>
+      </div>
+    </section>
+
+    <section class="feature-intro" id="features">
+      <p class="section-kicker">The familiar game, considered carefully</p>
+      <h2>Everything you need to settle in and clear the board.</h2>
+      <p>Minescape keeps the rules you know and adds useful choices without getting in the way.</p>
+    </section>
+
+    <section class="feature-grid" aria-label="Features">
+      <article class="feature feature-daily">
+        <div class="feature-copy">
+          <span class="feature-number">01</span>
+          <h3>A new board every day</h3>
+          <p>Take on the same no-guess challenge each day, keep a separate history, and share a spoiler-free result card.</p>
+        </div>
+        <img src="assets/daily-share.png" alt="A Minescape Daily result card showing a win" width="1080" height="720" loading="lazy">
+      </article>
+
+      <article class="feature feature-practice">
+        <div class="feature-copy">
+          <span class="feature-number">02</span>
+          <h3>Learn without pressure</h3>
+          <p>Use explained hints, undo a move, or follow the interactive lesson. Practice never changes your normal records.</p>
+        </div>
+        <div class="practice-board" aria-hidden="true">
+          <span class="covered"></span><span class="covered"></span><span class="covered"></span><span class="covered"></span>
+          <span class="open one">1</span><span class="open one">1</span><span class="flag">⚑</span><span class="covered"></span>
+          <span class="open"></span><span class="open one">1</span><span class="open one">1</span><span class="covered"></span>
+          <span class="open"></span><span class="open"></span><span class="open"></span><span class="covered"></span>
+        </div>
+      </article>
+
+      <article class="feature feature-control">
+        <div class="feature-copy">
+          <span class="feature-number">03</span>
+          <h3>Touch controls that play fair</h3>
+          <p>Tap to reveal and hold to flag. Gestures stay anchored, ambiguous touches cancel, and large boards can be panned and zoomed.</p>
+        </div>
+        <div class="gesture-demo" aria-hidden="true">
+          <div class="gesture-cell">🚩</div>
+          <div class="gesture-ring"></div>
+          <p>Hold to flag</p>
+        </div>
+      </article>
+
+      <article class="feature feature-local">
+        <div class="feature-copy">
+          <span class="feature-number">04</span>
+          <h3>Your progress stays yours</h3>
+          <p>Games, preferences, streaks, and best times live on your device. Export a backup whenever you want.</p>
+        </div>
+        <div class="local-badge" aria-hidden="true">
+          <span>⌁</span>
+          <strong>100% offline</strong>
+          <small>No ads · No analytics · No account</small>
+        </div>
+      </article>
+    </section>
+
+    <section class="detail-section" id="details">
+      <div class="detail-copy">
+        <p class="section-kicker">Play it your way</p>
+        <h2>Simple when you want it. Deep when you need it.</h2>
+        <p>Choose Beginner, Intermediate, Expert, or a custom board. Switch on certified no-guess presets, use question marks, tune hold timing, and choose light, dark, or device colors.</p>
+        <ul class="check-list">
+          <li><span>✓</span> Classic and no-guess play</li>
+          <li><span>✓</span> Custom boards from 5 × 5 to 50 × 50</li>
+          <li><span>✓</span> Local statistics and recent results</li>
+          <li><span>✓</span> Accessible labels and actions</li>
+          <li><span>✓</span> Progress export and import</li>
+        </ul>
+      </div>
+      <figure class="detail-preview">
+        <img src="assets/home.png" alt="Minescape home screen with daily challenge, practice, no-guess, and difficulty controls" width="720" height="1280" loading="lazy">
+      </figure>
+    </section>
+
+    <section class="closing">
+      <img src="assets/minescape-icon.png" alt="" width="72" height="72" loading="lazy">
+      <p class="section-kicker">Clear a little space</p>
+      <h2>Take Minescape with you.</h2>
+      <p>Open source, offline, and built for Android 8.0 and later.</p>
+      <a class="button button-light" href="https://github.com/cbulock/minescape">Explore the project on GitHub <span aria-hidden="true">→</span></a>
+    </section>
+  </main>
+
+  <footer>
+    <a class="brand footer-brand" href="./"><img src="assets/minescape-icon.png" alt="" width="36" height="36"><span>Minescape</span></a>
+    <p>Open-source Minesweeper for Android.</p>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy policy</a>
+      <a href="https://github.com/cbulock/minescape">Source code</a>
+      <a href="https://github.com/cbulock/minescape/issues">Support</a>
+    </div>
+  </footer>
+</body>
+</html>
