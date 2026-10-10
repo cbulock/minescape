@@ -21,8 +21,9 @@ class FeaturesTest {
         return game.copy(elapsedMillis = 8000)
     }
     private fun catalog(): DailyChallenge {
-        val bytes = File("src/main/assets/daily-v1.json").readBytes()
-        assertEquals("db1dcdb32040b6d2e7083b10420660ff58cd8ed0bd23e7be91bf644c0153f0b1",
+        // Git can check out CRLF on Windows and LF on Linux; pin the same catalog on both.
+        val bytes = File("src/main/assets/daily-v1.json").readText().replace("\r\n", "\n").encodeToByteArray()
+        assertEquals("3543e7b8dad04ff27fd5462c65b3b038d634fe4e34457a775ac10560d9b138c1",
             MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) })
         return DailyChallenge(Json.decodeFromString(bytes.decodeToString()))
     }

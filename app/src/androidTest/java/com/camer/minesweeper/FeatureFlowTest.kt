@@ -77,7 +77,7 @@ class FeatureFlowTest {
             val regular = GameEngine(Random(9)).reveal(Game(BoardConfig.preset(Difficulty.BEGINNER)), 40)
             initialize(scenario, AppData(game = regular))
             menu("Daily challenges")
-            compose.onNodeWithText("Today's challenge · ${model.today()}").performClick()
+            compose.onNodeWithText("Play today's challenge").performClick()
             waitFor { saved().activeSlot == ActiveSlot.DAILY }
             val daily = saved().dailyGame!!
             assertEquals(regular.id, saved().game!!.id); assertEquals(regular.cells, saved().game!!.cells)
@@ -89,11 +89,11 @@ class FeatureFlowTest {
             model.cell(CellIntent(daily.id, daily.cells.indexOfFirst { it.mine }, CellAction.REVEAL, daily.flagMode))
             waitFor { saved().dailyGame?.status == GameStatus.LOST }
             assertEquals(DailyOutcome.LOST, saved().dailyRecords[daily.dailyDate]?.outcome)
-            compose.onNodeWithText("Practice again").performClick()
+            compose.onNodeWithText("Practice again").performScrollTo().performClick()
             compose.onNodeWithText("Keep playing").performClick()
             assertEquals(regular.id, saved().game!!.id)
             compose.onNodeWithText("View result").performClick()
-            compose.onNodeWithText("Practice again").performClick()
+            compose.onNodeWithText("Practice again").performScrollTo().performClick()
             compose.onNodeWithText("Start new game").performClick()
             waitFor { saved().activeSlot == ActiveSlot.REGULAR && saved().game?.mode == PlayMode.PRACTICE }
             assertEquals(daily.dailyDate, saved().game!!.dailyDate)
