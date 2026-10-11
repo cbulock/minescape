@@ -137,7 +137,8 @@ class FeatureFlowTest {
             game.cells.indices.filter { !game.cells[it].mine }.forEach { game = engine.reveal(game, it) }
             val finished = game
             initialize(scenario, AppData(game = finished, preferences = Preferences(lastCustom = finished.config)).recordResult())
-            compose.onNodeWithText("Play again").performClick()
+            // Result actions can be below the fold when the fixed New game action is visible.
+            compose.onNodeWithText("Play again").performScrollTo().assertIsDisplayed().performClick()
             waitFor { saved().game?.id != finished.id }
             val fresh = saved().game!!
             assertEquals(finished.config, fresh.config); assertEquals(GameStatus.READY, fresh.status)
