@@ -58,7 +58,7 @@ internal fun DailyChallengesScreen(data: AppData, today: String, onPlay: (String
                                             else -> "Practice today's challenge"
                                         })
                                     }
-                                    Text("A new shared puzzle at midnight UTC. Your first attempt counts; replays are practice.", style = MaterialTheme.typography.bodySmall)
+                                    Text("A new shared puzzle at midnight local time. Your first attempt counts; replays are practice.", style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                         }

@@ -35,14 +35,43 @@ class FeaturesTest {
             assertTrue("Daily layout $day requires a guess", LogicSolver.solves(game))
         }
     }
-    @Test fun `daily transformations remain solvable and date is UTC`() {
+    @Test fun `daily transformations remain solvable`() {
         val daily = catalog()
         for (cycle in 0L..7L) assertTrue(LogicSolver.solves(daily.game(LocalDate.ofEpochDay(cycle * 366).toString())))
         val a = daily.game("2026-10-09"); val b = daily.game("2026-10-09")
         assertEquals(a.cells, b.cells); assertNotEquals(a.id, b.id)
+    }
+    @Test fun `daily date rolls over at local midnight including daylight saving changes`() {
         val layouts = Json.decodeFromString<List<List<Int>>>(File("src/main/assets/daily-v1.json").readText())
-        assertEquals("2026-10-10", DailyChallenge(layouts, Clock.fixed(Instant.parse("2026-10-10T00:00:00Z"), ZoneId.of("America/New_York"))).today())
-        assertEquals("2026-10-09", DailyChallenge(layouts, Clock.fixed(Instant.parse("2026-10-09T23:59:59Z"), ZoneId.of("Asia/Tokyo"))).today())
+        for ((zone, midnight) in listOf(
+            "America/New_York" to "2026-10-10T04:00:00Z",
+            "Asia/Tokyo" to "2026-10-09T15:00:00Z",
+            "America/New_York" to "2026-03-09T04:00:00Z",
+            "America/New_York" to "2026-11-02T05:00:00Z"
+        )) {
+            val instant = Instant.parse(midnight)
+            val zoneId = ZoneId.of(zone)
+            val date = instant.atZone(zoneId).toLocalDate()
+            assertEquals(date.minusDays(1).toString(), DailyChallenge(layouts, Clock.fixed(instant.minusSeconds(1), zoneId)).today())
+            assertEquals(date.toString(), DailyChallenge(layouts, Clock.fixed(instant, zoneId)).today())
+        }
+        assertEquals("2026-10-09", DailyChallenge(layouts, Clock.fixed(Instant.parse("2026-10-10T00:00:00Z"), ZoneId.of("America/New_York"))).today())
+        assertEquals("2026-10-10", DailyChallenge(layouts, Clock.fixed(Instant.parse("2026-10-09T23:59:59Z"), ZoneId.of("Asia/Tokyo"))).today())
+    }
+    @Test fun `daily date follows device timezone changes without recreating the challenge`() {
+        val previousZone = java.util.TimeZone.getDefault()
+        try {
+            val daily = catalog()
+            for (zone in listOf("Pacific/Kiritimati", "Pacific/Pago_Pago")) {
+                java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone(zone))
+                val before = LocalDate.now().toString()
+                val actual = daily.today()
+                val after = LocalDate.now().toString()
+                assertTrue("Daily date must use $zone", actual == before || actual == after)
+            }
+        } finally {
+            java.util.TimeZone.setDefault(previousZone)
+        }
     }
     @Test fun `no guess presets certify opening and bounded failure`() = runBlocking {
         for (difficulty in listOf(Difficulty.BEGINNER, Difficulty.INTERMEDIATE, Difficulty.EXPERT)) {

@@ -57,11 +57,14 @@ fun MinesweeperApp(model: GameViewModel) {
     }
     var pages by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val page = pages.lastOrNull()
+    val homeVisible = data?.activeGame == null || "home" in pages || "new" in pages
     fun openPage(destination: String) {
+        if (destination == "new" && homeVisible) return
         if (destination != page && (destination != "new" || data?.activeGame != null)) pages = pages + destination
     }
     fun closePage() { pages = pages.dropLast(1) }
     fun showGame() { pages = emptyList() }
+    fun showHome() { pages = listOf("home") }
     var menuOpen by remember { mutableStateOf(false) }
     var replacing by remember { mutableStateOf<StartRequest?>(null) }
     val owner = LocalLifecycleOwner.current
@@ -73,12 +76,14 @@ fun MinesweeperApp(model: GameViewModel) {
     }
     val paused = menuOpen || page != null || replacing != null || data?.recovered == true || busy != null || hintMessage != null || preview != null || pickerOpen || error != null
     LaunchedEffect(resumed, paused) { model.setActive(resumed && !paused) }
-    // Dialogs and menus own their Back callbacks; only the embedded home screen needs one here.
-    // At the root, leave Back to Android, including its back-to-home gesture.
-    BackHandler((page == "new" || error != null) && (page == null || page == "new") &&
+    // Close overlays first; the board returns to home, where Android owns Back.
+    BackHandler((page == "new" || (!homeVisible && page == null) || error != null) &&
+        (page == null || page == "new" || page == "home") &&
         !menuOpen && replacing == null && busy == null && hintMessage == null && preview == null &&
         data?.recovered != true && !pickerOpen) {
-        if (error != null) model.dismissError() else closePage()
+        if (error != null) model.dismissError()
+        else if (page == "new") closePage()
+        else showHome()
     }
     fun launch(request: StartRequest) {
         when {
@@ -121,7 +126,7 @@ fun MinesweeperApp(model: GameViewModel) {
     }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-            if (data?.activeGame == null || "new" in pages) {
+            if (homeVisible) {
                 Row(Modifier.align(Alignment.CenterHorizontally).widthIn(max = 560.dp).fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (LocalDensity.current.fontScale <= 1.3f) {
                         Surface(shape = RoundedCornerShape(12.dp), color = Violet) {
@@ -142,12 +147,13 @@ fun MinesweeperApp(model: GameViewModel) {
             val resultPresentation = loaded?.activeGame?.let { rememberResultPresentation(it, resumed && !paused) }
             if (loaded == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            } else if (loaded.activeGame == null || "new" in pages) {
+            } else if (homeVisible) {
                 HomeScreen(onChoose = chooseConfig, currentGame = loaded.activeGame, onResume = ::showGame,
                     preferences = loaded.preferences, onPreferences = model::preferences, onDaily = { daily(model.today()) },
                     onLearn = { openPage("tutorial") }, onStatistics = { openPage("stats") })
             } else {
                 GameScreen(loaded.activeGame!!, model, loaded, onNew = { openPage("new") }, onReplay = replay,
+                    onHome = ::showHome,
                     inputEnabled = resumed && !paused, hintIndex = hint?.index, menu = menu, resultPresentation = resultPresentation!!)
             }
         }
@@ -234,7 +240,7 @@ internal fun CustomBoard(onChoose: (BoardConfig) -> Unit, remembered: BoardConfi
 }
 
 @Composable
-private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: () -> Unit, onReplay: () -> Unit, inputEnabled: Boolean, hintIndex: Int?, menu: @Composable () -> Unit, resultPresentation: ResultPresentation) {
+private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: () -> Unit, onReplay: () -> Unit, onHome: () -> Unit, inputEnabled: Boolean, hintIndex: Int?, menu: @Composable () -> Unit, resultPresentation: ResultPresentation) {
     val feedback = LocalHapticFeedback.current
     val details = resultPresentation.open
     val result = data.results.find { it.id == game.id }
@@ -262,6 +268,10 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
                 }
             }
             menu()
+        }
+        if (game.finished) {
+            Button(onClick = onNew, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).heightIn(min = 48.dp),
+                shape = RoundedCornerShape(14.dp)) { Text("New game") }
         }
         if (!game.finished && (game.mode != PlayMode.NORMAL || game.generation == GenerationMode.NO_GUESS)) {
             Text(when (game.mode) { PlayMode.DAILY -> "Daily · ${game.dailyDate}"; PlayMode.PRACTICE -> "Practice · hints ${game.hintsUsed} · undos ${game.undosUsed} · mines hit ${game.minesHit}"; else -> "No-guess" },
@@ -295,6 +305,8 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
         }
     }
     if (details && game.finished) ResultDetailsDialog(game, result, official, onClose = resultPresentation.dismiss,
+        onNew = { resultPresentation.dismiss(); onNew() },
+        onBack = { resultPresentation.dismiss(); onHome() },
         onReplay = { resultPresentation.dismiss(); onReplay() },
         onRetry = { resultPresentation.dismiss(); model.retrySameBoard(game.id) },
         onUndo = { resultPresentation.dismiss(); model.undo() })

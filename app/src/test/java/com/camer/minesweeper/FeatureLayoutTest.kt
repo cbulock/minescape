@@ -62,6 +62,7 @@ class FeatureLayoutTest {
                 }
                 "result" -> {
                     compose.onNodeWithTag("game-result").assertIsDisplayed()
+                    compose.onNode(hasText("New game") and hasAnyAncestor(isDialog())).assertIsDisplayed()
                     compose.onNodeWithText("Result details").assertDoesNotExist()
                     if (won) compose.onNodeWithText("Previous best 01:45").performScrollTo().assertIsDisplayed()
                     val action = if (daily) "Practice again" else "Retry same board in practice"

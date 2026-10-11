@@ -59,6 +59,8 @@ internal fun ResultDetailsDialog(
     result: GameResult?,
     official: DailyRecord?,
     onClose: () -> Unit,
+    onNew: () -> Unit,
+    onBack: () -> Unit,
     onReplay: () -> Unit,
     onRetry: () -> Unit,
     onUndo: () -> Unit,
@@ -71,7 +73,7 @@ internal fun ResultDetailsDialog(
     val safeSquares = game.config.size - game.config.mines
     val progress = game.cleared.toFloat() / safeSquares
     val largeText = LocalDensity.current.fontScale > 1.3f
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.safeDrawingPadding().padding(16.dp).widthIn(max = 440.dp).fillMaxWidth().testTag("game-result"),
             shape = RoundedCornerShape(28.dp), color = colors.surfaceContainer) {
             Column(Modifier.padding(20.dp)) {
@@ -123,7 +125,7 @@ internal fun ResultDetailsDialog(
                         Text("Practice does not affect records.", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = onReplay, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
+                        OutlinedButton(onClick = onReplay, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
                             Text(if (game.dailyDate != null) "Practice again" else "Play again")
                         }
                         if (game.mode == PlayMode.PRACTICE) {
@@ -138,6 +140,10 @@ internal fun ResultDetailsDialog(
                                 style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                         }
                     }
+                }
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = onNew, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
+                    Text("New game")
                 }
                 if (official != null) {
                     Spacer(Modifier.height(12.dp))

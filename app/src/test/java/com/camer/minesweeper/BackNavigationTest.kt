@@ -58,7 +58,8 @@ class BackNavigationTest {
     }
 
     private fun assertRoot(scenario: ActivityScenario<MainActivity>) {
-        scenario.onActivity { assertFalse(it.onBackPressedDispatcher.hasEnabledCallbacks()) }
+        val boardVisible = compose.onAllNodesWithTag("board").fetchSemanticsNodes().isNotEmpty()
+        scenario.onActivity { assertEquals(boardVisible, it.onBackPressedDispatcher.hasEnabledCallbacks()) }
     }
 
     @Test fun pagesCloseWithBackEvenBeforeFirstGame() {
@@ -137,7 +138,7 @@ class BackNavigationTest {
         }
     }
 
-    @Test fun backClosesResultDetailsWithoutStartingAnotherGame() {
+    @Test fun backReturnsFromResultToHomeWithoutStartingAnotherGame() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             val engine = GameEngine(Random(8))
             val opened = engine.reveal(Game(BoardConfig.preset(Difficulty.BEGINNER)), 40)
@@ -146,9 +147,52 @@ class BackNavigationTest {
             compose.onNodeWithTag("game-result").assertIsDisplayed()
             back(scenario)
             compose.onNodeWithText("Retry same board in practice").assertDoesNotExist()
+            compose.onNodeWithText("Choose your board").assertIsDisplayed()
             assertEquals(lost.id, model.data.value?.game?.id)
             assertEquals(GameStatus.LOST, model.data.value?.game?.status)
             assertRoot(scenario)
+            scenario.recreate()
+            compose.waitForIdle()
+            compose.onNodeWithText("Choose your board").assertIsDisplayed()
+            compose.onNodeWithText("View last game").performClick()
+            compose.onNodeWithTag("board").assertIsDisplayed()
+            compose.onNodeWithTag("game-result").assertDoesNotExist()
+            back(scenario)
+            compose.onNodeWithText("Choose your board").assertIsDisplayed()
+        }
+    }
+
+    @Test fun backFromPlayingBoardReturnsHomeAndResumePreservesProgress() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            val game = GameEngine(Random(8)).reveal(Game(BoardConfig.preset(Difficulty.BEGINNER)), 40)
+            initialize(scenario, AppData(game = game))
+            back(scenario)
+            compose.onNodeWithText("Choose your board").assertIsDisplayed()
+            assertRoot(scenario)
+            menu("Settings")
+            back(scenario)
+            compose.onNodeWithText("Choose your board").assertIsDisplayed()
+            compose.onNodeWithText("Back to current game").performClick()
+            compose.onNodeWithTag("board").assertIsDisplayed()
+            assertEquals(game.id, model.data.value?.game?.id)
+            assertEquals(game.cells, model.data.value?.game?.cells)
+        }
+    }
+
+    @Test fun finishedGameOffersNewGameInResultAndOnBoard() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            for (game in listOf(wonEffectFixture(), lostEffectFixture())) {
+                initialize(scenario, AppData(game = game).recordResult())
+                compose.onNode(hasText("New game") and hasAnyAncestor(isDialog())).assertIsDisplayed().performClick()
+                compose.onNodeWithText("Choose your board").assertIsDisplayed()
+                compose.onNodeWithText("View last game").performClick()
+                compose.onNodeWithText("New game").assertIsDisplayed().performClick()
+                compose.onNodeWithText("Intermediate").performScrollTo().performClick()
+                compose.waitUntil(10000) { compose.waitForIdle(); model.data.value?.game?.id != game.id }
+                compose.onNodeWithTag("board").assertIsDisplayed()
+                assertEquals(Difficulty.INTERMEDIATE, model.data.value?.game?.config?.difficulty)
+                assertFalse(model.data.value!!.game!!.finished)
+            }
         }
     }
 

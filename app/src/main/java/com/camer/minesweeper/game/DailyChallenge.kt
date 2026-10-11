@@ -2,11 +2,11 @@ package com.camer.minesweeper.game
 
 import java.time.Clock
 import java.time.LocalDate
-import java.time.ZoneOffset
 
-class DailyChallenge(private val layouts: List<List<Int>>, private val clock: Clock = Clock.systemUTC()) {
+class DailyChallenge(private val layouts: List<List<Int>>, private val clock: Clock? = null) {
     init { require(layouts.size == 366 && layouts.all { it.size == 40 && it.distinct().size == 40 && it.all { index -> index in 0..255 } }) }
-    fun today(): String = LocalDate.now(clock.withZone(ZoneOffset.UTC)).toString()
+    // Resolve the device zone each time so timezone changes also apply to an existing challenge.
+    fun today(): String = LocalDate.now(clock ?: Clock.systemDefaultZone()).toString()
     fun game(date: String, practice: Boolean = false): Game {
         val day = LocalDate.parse(date).toEpochDay()
         val transform = Math.floorMod(Math.floorDiv(day, 366), 8).toInt()
