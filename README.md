@@ -48,6 +48,12 @@ The public APK workflow requires the `ANDROID_DEBUG_KEYSTORE_BASE64` Actions sec
 
 ## Build and install
 
+App versions are calculated from `version.properties` and full Git history for both APKs and AABs. The baseline commit is version **1.2.1 (code 4)**; each subsequent source commit adds one to the patch and version code. The first commit after that baseline builds **1.2.2 (code 5)**. A push with multiple commits can skip numbers, and rebuilding the same commit keeps the same version, regardless of workflow run numbers or which repository builds it. Builds do not create version-bump commits or tags.
+
+Use a full Git clone (`git fetch --unshallow` for an existing shallow clone). Both workflow definitions set `fetch-depth: 0`; install the updated private AAB workflow in `minescape-builds` before building these changes there. Keep published `main` history intact so versions continue increasing. For a deliberate major/minor change, update `version.properties` with a committed baseline, the desired base version, and a base code at least as high as the last distributed code. Run `./gradlew.bat :app:printAppVersion` to see the version for the current checkout. Uncommitted edits do not change it.
+
+On Windows, `./scripts/test-versioning.ps1` checks baseline, next-commit, retry, merge, major/minor reset, and shallow-clone behavior using the actual Gradle script in temporary Git repositories.
+
 Open this folder in Android Studio, let Gradle sync, and run `app` on a device or emulator. Install Android SDK Platform 36.1 and Build Tools 35.0.0 through SDK Manager if prompted. Use JDK 17 or newer (Android Studio's bundled JDK works).
 
 On Windows PowerShell:

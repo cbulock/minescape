@@ -5,6 +5,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+apply(from = rootProject.file("gradle/versioning.gradle.kts"))
+
 android {
     namespace = "com.cbulock.minescape"
     compileSdk = 36
@@ -13,8 +15,8 @@ android {
         applicationId = "com.cbulock.minescape"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.2.1"
+        versionCode = extra["appVersionCode"] as Int
+        versionName = extra["appVersionName"] as String
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
