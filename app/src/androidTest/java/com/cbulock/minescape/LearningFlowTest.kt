@@ -108,9 +108,9 @@ class LearningFlowTest {
             game.cells.indices.filter { !game.cells[it].mine }.forEach { game = engine.reveal(game, it) }
             val data = AppData(game = game.copy(elapsedMillis = 10000), statistics = mapOf(Difficulty.BEGINNER to Statistics(wins = 1, bestMillis = 12000))).recordResult()
             initialize(scenario, data)
-            compose.onNodeWithText("New personal best").assertIsDisplayed()
+            compose.onNodeWithText("New personal best").performScrollTo().assertIsDisplayed()
             compose.onNodeWithTag("game-result").assertIsDisplayed()
-            compose.onNodeWithText("Previous best 00:12").assertIsDisplayed()
+            compose.onNodeWithText("Previous best 00:12").performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("View board").performClick()
             menu("New game")
             compose.waitForIdle()
@@ -122,7 +122,7 @@ class LearningFlowTest {
             waitFor { compose.onAllNodesWithText("View result").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("game-result").assertDoesNotExist()
             compose.onNodeWithText("View result").performClick()
-            compose.onNodeWithText("New personal best").assertIsDisplayed()
+            compose.onNodeWithText("New personal best").performScrollTo().assertIsDisplayed()
             assertEquals(2, saved().statistics[Difficulty.BEGINNER]?.wins)
         }
     }
