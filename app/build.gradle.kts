@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.camer.minesweeper"
+    namespace = "com.cbulock.minescape"
     compileSdk = 36
     compileSdkMinor = 1
     defaultConfig {

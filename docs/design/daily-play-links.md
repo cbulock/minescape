@@ -1,6 +1,6 @@
 # Daily play links
 
-Status: planned. Sharing currently contains only the result image and text. There is no public destination or Play Store listing yet, so do not add a placeholder URL, QR code, or install call to action.
+Status: store link implemented; dated puzzle links planned. Shared result text includes the Google Play listing at https://play.google.com/store/apps/details?id=com.cbulock.minescape through `DailyShare`, covering both the finished-result and daily-history entry points. This installs or opens the app; it does not open a specific dated puzzle. The result image remains spoiler-free and unchanged.
 
 ## Link contract
 

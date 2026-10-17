@@ -19,6 +19,6 @@ Constraints: no app name, no words, no extra numerals, no watermark, no stars, n
 
 ## Verification
 
-Run `./gradlew.bat testDebugUnitTest --tests com.camer.minesweeper.LauncherIconTest assembleDebug lintDebug`. The native Android renderer saves launcher previews at 48 and 512 pixels, plus a monochrome preview, in `app/build/outputs/screenshots/`.
+Run `./gradlew.bat testDebugUnitTest --tests com.cbulock.minescape.LauncherIconTest assembleDebug lintDebug`. The native Android renderer saves launcher previews at 48 and 512 pixels, plus a monochrome preview, in `app/build/outputs/screenshots/`.
 
 The installable build with this icon is `artifacts/minescape-icon-debug.apk`; its checksum is in `artifacts/SHA256SUMS-icon.txt`. Native launcher previews are saved as `artifacts/minescape-icon-preview.png`, `artifacts/minescape-icon-preview-48.png`, and `artifacts/minescape-icon-monochrome.png`. No device installation was performed.
