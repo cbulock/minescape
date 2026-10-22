@@ -137,8 +137,8 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                 game.cells.forEachIndexed { index, storedCell ->
                     val preview = flagPreview
                     val cell = if (preview?.first == index && !storedCell.revealed) storedCell.copy(flagged = preview.second.flagged, questioned = preview.second.questioned) else storedCell
-                    val x = (geometry.left + index % game.config.columns * geometry.cell) * density
-                    val y = (geometry.top + index / game.config.columns * geometry.cell) * density
+                    val x = (geometry.left + geometry.column(index) * geometry.cell) * density
+                    val y = (geometry.top + geometry.row(index) * geometry.cell) * density
                     if (x + cellSize < 0 || y + cellSize < 0 || x > size.width || y > size.height) return@forEachIndexed
                     val origin = Offset(x + gap, y + gap)
                     val tileSize = Size(cellSize - gap * 2, cellSize - gap * 2)
@@ -196,8 +196,8 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
             }
             // Virtual cell targets follow the exact same transform as the canvas, including zoom.
             game.cells.forEachIndexed { index, cell ->
-                val x = geometry.left + index % game.config.columns * geometry.cell
-                val y = geometry.top + index / game.config.columns * geometry.cell
+                val x = geometry.left + geometry.column(index) * geometry.cell
+                val y = geometry.top + geometry.row(index) * geometry.cell
                 if (x + geometry.cell > 0 && y + geometry.cell > 0 && x < geometry.width && y < geometry.height) {
                     Box(Modifier.offset { IntOffset((x * density).roundToInt(), (y * density).roundToInt()) }
                         .size(geometry.cell.dp).semantics {

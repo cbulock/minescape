@@ -22,7 +22,7 @@ import kotlinx.coroutines.CancellationException
 import java.util.Locale
 
 @Composable
-fun ShareResultButton(record: DailyRecord, modifier: Modifier = Modifier, outlined: Boolean = false) {
+fun ShareResultButton(record: DailyRecord, modifier: Modifier = Modifier, outlined: Boolean = false, prominent: Boolean = false) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var preparing by remember { mutableStateOf(false) }
@@ -52,10 +52,13 @@ fun ShareResultButton(record: DailyRecord, modifier: Modifier = Modifier, outlin
             finally { preparing = false }
         }
     }
-    if (outlined) OutlinedButton(enabled = !preparing, onClick = showPreview, modifier = modifier, shape = RoundedCornerShape(12.dp)) {
-        Text(if (preparing) "Preparing…" else "Share result")
+    val label = if (preparing) "Preparing…" else if (prominent) "Share daily result" else "Share result"
+    if (prominent) Button(enabled = !preparing, onClick = showPreview, modifier = modifier, shape = RoundedCornerShape(14.dp)) {
+        Text(label)
+    } else if (outlined) OutlinedButton(enabled = !preparing, onClick = showPreview, modifier = modifier, shape = RoundedCornerShape(12.dp)) {
+        Text(label)
     } else TextButton(enabled = !preparing, onClick = showPreview, modifier = modifier) {
-        Text(if (preparing) "Preparing…" else "Share result")
+        Text(label)
     }
     if (preview) {
         AlertDialog(

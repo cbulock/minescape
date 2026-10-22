@@ -72,8 +72,8 @@ internal fun ResultEffects(game: Game, geometry: BoardGeometry, enabled: Boolean
         when (kind) {
             Burst.CONFETTI -> confetti(fraction, particles)
             Burst.EXPLOSION -> {
-                val origin = Offset((geometry.left + (game.explodedIndex % game.config.columns + .5f) * geometry.cell) * density,
-                    (geometry.top + (game.explodedIndex / game.config.columns + .5f) * geometry.cell) * density)
+                val origin = Offset((geometry.left + (geometry.column(game.explodedIndex) + .5f) * geometry.cell) * density,
+                    (geometry.top + (geometry.row(game.explodedIndex) + .5f) * geometry.cell) * density)
                 explosion(fraction, origin, geometry.cell * density, particles)
             }
         }

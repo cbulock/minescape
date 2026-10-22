@@ -138,7 +138,7 @@ class FeatureFlowTest {
             val finished = game
             initialize(scenario, AppData(game = finished, preferences = Preferences(lastCustom = finished.config)).recordResult())
             // Result actions can be below the fold when the fixed New game action is visible.
-            compose.onNodeWithText("Play again").performScrollTo().assertIsDisplayed().performClick()
+            compose.onNodeWithText("Play another Custom game").performScrollTo().assertIsDisplayed().performClick()
             waitFor { saved().game?.id != finished.id }
             val fresh = saved().game!!
             assertEquals(finished.config, fresh.config); assertEquals(GameStatus.READY, fresh.status)

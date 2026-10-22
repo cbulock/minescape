@@ -5,7 +5,45 @@ import org.junit.Test
 
 class BoardGeometryTest {
     private val config = BoardConfig.preset(Difficulty.EXPERT)
-    private val geometry = BoardGeometry(config, 360f, 400f, Viewport(centerColumn = 15f, centerRow = 8f))
+    private val geometry = BoardGeometry(config, 360f, 400f, Viewport(centerColumn = 15f, centerRow = 8f), autoOrient = false)
+
+    @Test fun `rectangular boards use the orientation with the largest square cells`() {
+        for (config in listOf(this.config, BoardConfig(12, 30, 60))) {
+            for ((width, height) in listOf(360f to 640f, 640f to 260f, 800f to 1100f)) {
+                val board = BoardGeometry(config, width, height, Viewport())
+                val original = board.copy(autoOrient = false)
+                assertTrue(board.fit >= original.fit)
+                assertEquals(config.size, board.columns * board.rows)
+                assertEquals(config, board.config)
+                for (index in 0 until config.size) {
+                    val x = board.left + (board.column(index) + .5f) * board.cell
+                    val y = board.top + (board.row(index) + .5f) * board.cell
+                    assertEquals(index, board.hit(x, y))
+                }
+            }
+        }
+    }
+
+    @Test fun `portrait zoom preserves logical cell identity and saved center`() {
+        val board = BoardGeometry(config, 360f, 640f, Viewport(40f, 15f, 8f))
+        assertTrue(board.transposed)
+        val target = board.hit(130f, 260f)
+        val next = board.copy(viewport = board.transform(1.2f, 0f, 0f, 130f, 260f))
+        assertEquals(target, next.hit(130f, 260f))
+        val panned = board.copy(viewport = board.transform(1f, 30f, 50f, 180f, 320f))
+        assertTrue(panned.viewport.centerRow < board.viewport.centerRow)
+        assertTrue(panned.viewport.centerColumn < board.viewport.centerColumn)
+        val landscape = panned.copy(width = 640f, height = 300f)
+        assertFalse(landscape.transposed)
+        assertEquals(panned.viewport, landscape.viewport)
+    }
+
+    @Test fun `large beginner boards use the available space beyond the old cell cap`() {
+        val board = BoardGeometry(BoardConfig.preset(Difficulty.BEGINNER), 720f, 1000f, Viewport())
+        assertEquals(80f, board.fit)
+        assertEquals(0f, board.left)
+        assertEquals(80f, board.transform(2f, 0f, 0f, 360f, 500f).cellDp)
+    }
     @Test fun `fit shows whole board and edge hits stay exact`() {
         assertEquals(12f, geometry.cell)
         assertEquals(0, geometry.hit(geometry.left + .1f, geometry.top + .1f))

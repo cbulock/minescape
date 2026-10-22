@@ -13,6 +13,7 @@ import com.cbulock.minescape.data.*
 import com.cbulock.minescape.game.*
 import com.cbulock.minescape.ui.DailyShare
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 import org.junit.Assert.*
 import org.junit.Rule
@@ -103,14 +104,24 @@ class DailyShareTest {
             dailyRecords = mapOf("2026-10-09" to DailyRecord("2026-10-09", DailyOutcome.IN_PROGRESS))).recordResult()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { runBlocking { GameRepository(it).update { data } } }
-            compose.waitUntil(10000) { compose.waitForIdle(); compose.onAllNodesWithText("Share result").fetchSemanticsNodes().isNotEmpty() }
+            compose.waitUntil(10000) { compose.waitForIdle(); compose.onAllNodesWithTag("game-result").fetchSemanticsNodes().isNotEmpty() }
+            val shareLabel = if (history) "Share result" else "Share daily result"
             if (history) {
                 compose.onNodeWithText("View board").performClick()
                 compose.onNodeWithContentDescription("Open menu").performClick()
                 compose.onNodeWithText("Daily challenges").performClick()
                 compose.onNodeWithText("Share result").performScrollTo()
+            } else {
+                val share = compose.onNode(hasText(shareLabel) and hasAnyAncestor(isDialog())).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+                val newGame = compose.onNode(hasText("New game") and hasAnyAncestor(isDialog())).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+                assertTrue("Daily sharing should lead the result actions", share.bottom <= newGame.top)
+                if (!won) {
+                    compose.onNodeWithText("View board").performClick()
+                    compose.onNodeWithText("New game").assertIsDisplayed()
+                }
             }
-            compose.onNodeWithText("Share result").assertIsDisplayed().performClick()
+            val shareButton = if (won && !history) compose.onNode(hasText(shareLabel) and hasAnyAncestor(isDialog())) else compose.onNodeWithText(shareLabel)
+            shareButton.assertIsDisplayed().performClick()
             compose.waitUntil(10000) {
                 compose.waitForIdle()
                 compose.onAllNodesWithContentDescription(DailyShare.text(data.dailyRecords["2026-10-09"]!!)).fetchSemanticsNodes().isNotEmpty()
@@ -136,8 +147,18 @@ class DailyShareTest {
             assertEquals(DailyShare.text(data.dailyRecords["2026-10-09"]!!), send.getStringExtra(Intent.EXTRA_TEXT))
             compose.onNodeWithText("Close").performClick()
             if (history) compose.onNodeWithText("Done").performClick()
+            else {
+                val newGame = if (won) compose.onNode(hasText("New game") and hasAnyAncestor(isDialog())) else compose.onNodeWithText("New game")
+                newGame.performClick()
+                compose.onNodeWithText("Choose your board").assertIsDisplayed()
+                scenario.onActivity { runBlocking {
+                    assertEquals(data.dailyRecords, GameRepository(it).data.first().dailyRecords)
+                } }
+                compose.onNodeWithText("View last game").performClick()
+                compose.onNodeWithTag("board").assertIsDisplayed()
+            }
             scenario.onActivity { runBlocking { GameRepository(it).update { data.copy(game = challenge.game("2026-10-09", true), activeSlot = ActiveSlot.REGULAR) } } }
-            compose.waitUntil(10000) { compose.waitForIdle(); compose.onAllNodesWithText("Share result").fetchSemanticsNodes().isEmpty() }
+            compose.waitUntil(10000) { compose.waitForIdle(); compose.onAllNodes(hasText("Share result") or hasText("Share daily result")).fetchSemanticsNodes().isEmpty() }
         }
     }
 }

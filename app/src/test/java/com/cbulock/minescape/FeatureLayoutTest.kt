@@ -63,8 +63,9 @@ class FeatureLayoutTest {
                 "result" -> {
                     compose.onNodeWithTag("game-result").assertIsDisplayed()
                     compose.onNode(hasText("New game") and hasAnyAncestor(isDialog())).assertIsDisplayed()
+                    if (daily) compose.onNode(hasText("Share daily result") and hasAnyAncestor(isDialog())).assertIsDisplayed()
                     compose.onNodeWithText("Result details").assertDoesNotExist()
-                    if (won) compose.onNodeWithText("Previous best 01:45").performScrollTo().assertIsDisplayed()
+                    if (won && !daily) compose.onNodeWithText("Previous best 01:45").performScrollTo().assertIsDisplayed()
                     val action = if (daily) "Practice again" else "Retry same board in practice"
                     val button = compose.onNode(hasText(action) and hasAnyAncestor(isDialog()))
                     button.performScrollTo().assertIsDisplayed()
@@ -92,6 +93,12 @@ class FeatureLayoutTest {
                     if (game.finished) compose.onNodeWithText("View board").performClick()
                     compose.onNodeWithTag("board").assertIsDisplayed()
                     compose.onNodeWithText("Fit board").assertIsDisplayed()
+                    if (game.finished) {
+                        compose.onNodeWithText("New game").assertIsDisplayed()
+                        if (daily) compose.onNodeWithText("Share daily result").assertIsDisplayed()
+                        val board = compose.onNodeWithTag("board").fetchSemanticsNode().boundsInRoot
+                        check(board.height >= 160f) { "Finished actions leave too little board space: $board" }
+                    }
                     if (practice && !lost) {
                         compose.onNodeWithText("Undo").assertIsDisplayed()
                         if (!lost) compose.onNodeWithText("Hint").assertIsDisplayed()
@@ -134,5 +141,10 @@ class FeatureLayoutTest {
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun resultDetailsLargeText() = render("result-details-large-text", screen = "result", won = true, largeText = true)
     @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi") fun resultDetailsLandscape() = render("result-details-landscape", screen = "result", won = true)
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun dailyResultDetails() = render("result-daily-details", screen = "result", lost = true, daily = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun dailyResultLargeText() = render("result-daily-large-text", screen = "result", won = true, daily = true, largeText = true)
+    @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi") fun dailyResultLandscape() = render("result-daily-landscape", screen = "result", lost = true, daily = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun dailyFinishedBoard() = render("daily-finished-board", won = true, daily = true)
+    @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun dailyFinishedBoardLargeText() = render("daily-finished-board-large-text", lost = true, daily = true, largeText = true)
+    @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi") fun dailyFinishedBoardLandscape() = render("daily-finished-board-landscape", lost = true, daily = true)
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi") fun controlSettings() = render("learning-controls", screen = "controls")
 }

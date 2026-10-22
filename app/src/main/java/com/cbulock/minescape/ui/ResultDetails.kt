@@ -126,7 +126,7 @@ internal fun ResultDetailsDialog(
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = onReplay, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
-                            Text(if (game.dailyDate != null) "Practice again" else "Play again")
+                            Text(if (game.dailyDate != null) "Practice again" else "Play another ${game.config.difficulty.title} game")
                         }
                         if (game.mode == PlayMode.PRACTICE) {
                             OutlinedButton(onClick = onUndo, enabled = game.undo.isNotEmpty(), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) { Text("Undo") }
@@ -142,13 +142,25 @@ internal fun ResultDetailsDialog(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Button(onClick = onNew, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
-                    Text("New game")
-                }
-                if (official != null) {
-                    Spacer(Modifier.height(12.dp))
-                    ShareResultButton(official, Modifier.fillMaxWidth().heightIn(min = 48.dp), outlined = true)
-                }
+                FinishedGameActions(official, onNew)
+            }
+        }
+    }
+}
+
+/** Keep the next steps available while result details or the board are being inspected. */
+@Composable
+internal fun FinishedGameActions(official: DailyRecord?, onNew: () -> Unit, modifier: Modifier = Modifier, horizontal: Boolean = false) {
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = if (horizontal) 2 else 1) {
+        if (official != null) {
+            ShareResultButton(official, Modifier.weight(1f).heightIn(min = 48.dp), prominent = true)
+            OutlinedButton(onClick = onNew, modifier = Modifier.weight(1f).heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
+                Text("New game")
+            }
+        } else {
+            Button(onClick = onNew, modifier = Modifier.weight(1f).heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
+                Text("New game")
             }
         }
     }

@@ -270,8 +270,9 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
             menu()
         }
         if (game.finished) {
-            Button(onClick = onNew, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp)) { Text("New game") }
+            BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+                FinishedGameActions(official, onNew, horizontal = maxWidth >= 480.dp && !largeText)
+            }
         }
         if (!game.finished && (game.mode != PlayMode.NORMAL || game.generation == GenerationMode.NO_GUESS)) {
             Text(when (game.mode) { PlayMode.DAILY -> "Daily · ${game.dailyDate}"; PlayMode.PRACTICE -> "Practice · hints ${game.hintsUsed} · undos ${game.undosUsed} · mines hit ${game.minesHit}"; else -> "No-guess" },
