@@ -7,3 +7,7 @@ local.properties
 captures/
 .tools/
 artifacts/
+__pycache__/
+*.jks
+*.keystore
+play-service-account*.json

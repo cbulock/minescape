@@ -46,6 +46,8 @@ jobs:
           chmod 600 "$HOME/.android/debug.keystore"
       - name: Test, lint, and build APK
         run: bash ./gradlew --no-daemon :app:printAppVersion testDebugUnitTest lintDebug assembleDebug
+      - name: Test Play publishing safeguards
+        run: python3 -m unittest discover -s scripts -p test_publish_play.py
       - name: Sign published APK with stable key
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |
