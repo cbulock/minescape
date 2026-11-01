@@ -1,6 +1,7 @@
 package com.cbulock.minescape
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,15 +12,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.luminance
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.ViewModelProvider
 import com.cbulock.minescape.data.ThemeMode
 import com.cbulock.minescape.ui.MinescapeApp
 import com.cbulock.minescape.ui.MinescapeTheme
 
 class MainActivity : ComponentActivity() {
-    private val model: GameViewModel by viewModels { ViewModelProvider.AndroidViewModelFactory(application) }
+    private val model: GameViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) receive(intent)
         enableEdgeToEdge()
         setContent {
             val data by model.data.collectAsStateWithLifecycle()
@@ -34,5 +35,13 @@ class MainActivity : ComponentActivity() {
                 MinescapeApp(model)
             }
         }
+    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        receive(intent)
+    }
+    private fun receive(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_VIEW) intent.dataString?.let(model::receiveChallenge)
     }
 }

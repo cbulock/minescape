@@ -30,8 +30,13 @@ internal fun DailyChallengesScreen(data: AppData, today: String, onPlay: (String
     val colors = MaterialTheme.colorScheme
     val records = remember(data.dailyRecords) { data.dailyRecords.toSortedMap(reverseOrder()).values.toList() }
     var visible by rememberSaveable { mutableIntStateOf(10) }
+    var archive by rememberSaveable { mutableStateOf(false) }
     val current = data.dailyRecords[today]
     val unfinished = data.dailyGame?.takeIf { !it.finished && it.dailyDate != today }
+    if (archive) {
+        DailyArchive(today, data.dailyRecords, onPlay = { archive = false; onPlay(it) }, onClose = { archive = false })
+        return
+    }
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxSize(), color = colors.background) {
             Box(Modifier.safeDrawingPadding(), contentAlignment = Alignment.TopCenter) {
@@ -62,6 +67,9 @@ internal fun DailyChallengesScreen(data: AppData, today: String, onPlay: (String
                                 }
                             }
                         }
+                        item(key = "archive") {
+                            OutlinedButton(onClick = { archive = true }, modifier = Modifier.fillMaxWidth()) { Text("Browse archive") }
+                        }
                         unfinished?.let { game ->
                             item(key = "resume") {
                                 OutlinedCard(shape = RoundedCornerShape(20.dp)) {
@@ -90,7 +98,9 @@ internal fun DailyChallengesScreen(data: AppData, today: String, onPlay: (String
                                 }
                             }
                         }
-                        items(records.take(visible), key = { it.date }) { record -> DailyHistoryCard(record, onPlay) }
+                        items(records.take(visible), key = { it.date }) { record -> DailyHistoryCard(record) { date ->
+                            if (data.dailyGame?.dailyDate == date && data.dailyGame.finished == false) onResume() else onPlay(date)
+                        } }
                         if (records.size > visible) item(key = "more") {
                             OutlinedButton(onClick = { visible += 10 }, modifier = Modifier.fillMaxWidth()) {
                                 Text("Show more (${records.size - visible} remaining)")

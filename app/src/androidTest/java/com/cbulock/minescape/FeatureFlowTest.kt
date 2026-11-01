@@ -63,6 +63,7 @@ class FeatureFlowTest {
             waitFor { model.hintMessage.value != null }
             if (model.hint.value != null) {
                 val hint = model.hint.value!!
+                compose.onNodeWithText("Show answer").performClick()
                 compose.onNodeWithText(if (hint.mine) "Flag square" else "Reveal square").performClick()
                 waitFor { saved().game!!.cells[hint.index].let { if (hint.mine) it.flagged else it.revealed } }
             } else compose.onNodeWithText("Close").performClick()
@@ -123,6 +124,7 @@ class FeatureFlowTest {
             compose.onNodeWithContentDescription("Open menu").performClick()
             compose.onNodeWithText("Resume daily challenge").assertDoesNotExist()
             compose.onNodeWithText("Daily challenges").performClick()
+            compose.onNodeWithTag("daily-list").performScrollToKey(date)
             compose.onNodeWithText("Practice").assertExists()
             compose.onNodeWithText("Resume $date").assertDoesNotExist()
             assertEquals(daily.id, saved().dailyGame?.id)
@@ -205,20 +207,22 @@ class FeatureFlowTest {
     }
     @Test fun replacingPreviousDayArchivesAttemptAndRetryRemainsPractice() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            initialize(scenario)
-            model.startDaily("2026-10-09")
-            waitFor { saved().dailyGame?.dailyDate == "2026-10-09" }
+            val previousDate = java.time.LocalDate.now().minusDays(1).toString()
+            val today = java.time.LocalDate.now().toString()
+            val app = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.app.Application>()
+            val layouts = kotlinx.serialization.json.Json.decodeFromString<List<List<Int>>>(app.assets.open("daily-v1.json").bufferedReader().use { it.readText() })
+            initialize(scenario, AppData(dailyGame = DailyChallenge(layouts).game(previousDate), activeSlot = ActiveSlot.DAILY).recordResult())
             val oldCells = saved().dailyGame!!.cells
-            model.startDaily("2026-10-10")
-            waitFor { saved().dailyGame?.dailyDate == "2026-10-10" }
+            model.startDaily(today)
+            waitFor { saved().dailyGame?.dailyDate == today }
             val currentId = saved().dailyGame!!.id
-            assertEquals(DailyOutcome.ABANDONED, saved().dailyRecords["2026-10-09"]?.outcome)
-            model.startDaily("2026-10-09")
+            assertEquals(DailyOutcome.ABANDONED, saved().dailyRecords[previousDate]?.outcome)
+            model.startDaily(previousDate)
             waitFor { saved().activeSlot == ActiveSlot.REGULAR }
             assertEquals(PlayMode.PRACTICE, saved().game!!.mode)
             assertEquals(oldCells, saved().game!!.cells)
             assertEquals(currentId, saved().dailyGame!!.id)
-            assertEquals(DailyOutcome.ABANDONED, saved().dailyRecords["2026-10-09"]?.outcome)
+            assertEquals(DailyOutcome.ABANDONED, saved().dailyRecords[previousDate]?.outcome)
             assertTrue(saved().statistics.isEmpty()); assertTrue(saved().results.isEmpty())
         }
     }

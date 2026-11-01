@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.cbulock.minescape.data.*
 import com.cbulock.minescape.game.*
@@ -14,7 +15,32 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
 import java.io.IOException
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
+class GameViewModel(application: Application, private val state: SavedStateHandle) : AndroidViewModel(application) {
+    val pendingChallenge = state.getStateFlow<String?>("pendingChallenge", null)
+    fun receiveChallenge(link: String) {
+        if (link.length > ChallengeLink.MAX_LENGTH) { mutableError.value = "This challenge link is too long."; return }
+        if (calculation?.isActive == true) cancelCalculation() else dismissHint()
+        state["pendingChallenge"] = link
+    }
+    fun dismissChallenge() { state["pendingChallenge"] = null }
+    fun openChallenge(link: String, expectedRegularId: String?, expectedDailyId: String?, expectedToday: String = today()) {
+        val challenge = try { ChallengeLink.parse(link, java.time.LocalDate.parse(today())) }
+            catch (e: IllegalArgumentException) { mutableError.value = e.message; dismissChallenge(); return }
+        cancelCalculation()
+        dismissChallenge()
+        submit { old ->
+            if (today() != expectedToday) {
+                mutableError.value = "The date changed while opening this puzzle. Open the link again to continue."
+                old
+            } else if (old.game?.id != expectedRegularId || old.dailyGame?.id != expectedDailyId) {
+                state["pendingChallenge"] = link
+                old
+            } else when (challenge) {
+                is SharedChallenge.Board -> old.copy(game = challenge.game(), activeSlot = ActiveSlot.REGULAR)
+                is SharedChallenge.Daily -> dailyStart(old, challenge.date)
+            }
+        }
+    }
     private val repository = GameRepository(application)
     private val engine = GameEngine()
     private val daily by lazy { DailyChallenge(Json.decodeFromString<List<List<Int>>>(
@@ -103,22 +129,30 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     } }
     fun startDaily(date: String = today()) {
         cancelCalculation()
-        submit { old ->
-            val existing = old.dailyRecords[date]
-            when {
-                old.dailyGame?.dailyDate == date -> old.copy(activeSlot = ActiveSlot.DAILY)
-                existing != null -> old.copy(game = daily.game(date, practice = true), activeSlot = ActiveSlot.REGULAR)
-                else -> {
-                    var records = old.dailyRecords
-                    old.dailyGame?.takeIf { !it.finished }?.let { previous -> records = records +
-                        (previous.dailyDate!! to DailyRecord(previous.dailyDate, DailyOutcome.ABANDONED, previous.elapsedMillis)) }
-                    old.copy(dailyGame = daily.game(date), activeSlot = ActiveSlot.DAILY,
-                        dailyRecords = records + (date to DailyRecord(date, DailyOutcome.IN_PROGRESS)))
-                }
+        submit { old -> dailyStart(old, date) }
+    }
+    private fun dailyStart(old: AppData, date: String): AppData {
+        val parsed = runCatching { java.time.LocalDate.parse(date) }.getOrNull() ?: return old
+        if (parsed.isAfter(java.time.LocalDate.parse(today()))) return old
+        if (date != today()) return old.copy(game = daily.game(date, practice = true), activeSlot = ActiveSlot.REGULAR)
+        val existing = old.dailyRecords[date]
+        return when {
+            old.dailyGame?.dailyDate == date && !old.dailyGame.finished -> old.copy(activeSlot = ActiveSlot.DAILY)
+            existing != null -> old.copy(game = daily.game(date, practice = true), activeSlot = ActiveSlot.REGULAR)
+            else -> {
+                var records = old.dailyRecords
+                old.dailyGame?.takeIf { !it.finished }?.let { previous -> records = records +
+                    (previous.dailyDate!! to DailyRecord(previous.dailyDate, DailyOutcome.ABANDONED, previous.elapsedMillis)) }
+                old.copy(dailyGame = daily.game(date), activeSlot = ActiveSlot.DAILY,
+                    dailyRecords = records + (date to DailyRecord(date, DailyOutcome.IN_PROGRESS)))
             }
         }
     }
     fun startDailyPractice(date: String) {
+        val parsed = runCatching { java.time.LocalDate.parse(date) }.getOrNull()
+        if (parsed == null || parsed.isAfter(java.time.LocalDate.parse(today()))) {
+            mutableError.value = "This daily puzzle date is not available."; return
+        }
         cancelCalculation(); submit { it.copy(game = daily.game(date, practice = true), activeSlot = ActiveSlot.REGULAR) }
     }
     fun cell(intent: CellIntent) {

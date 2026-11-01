@@ -48,6 +48,9 @@ fun MinescapeApp(model: GameViewModel) {
     val hint by model.hint.collectAsStateWithLifecycle()
     val hintMessage by model.hintMessage.collectAsStateWithLifecycle()
     val preview by model.preview.collectAsStateWithLifecycle()
+    val incomingChallenge by model.pendingChallenge.collectAsStateWithLifecycle()
+    var pasteChallenge by rememberSaveable { mutableStateOf(false) }
+    var shareChallenge by rememberSaveable { mutableStateOf(false) }
     var pickerOpen by rememberSaveable { mutableStateOf(false) }
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         pickerOpen = false; uri?.let(model::exportBackup)
@@ -59,6 +62,7 @@ fun MinescapeApp(model: GameViewModel) {
     val page = pages.lastOrNull()
     val homeVisible = data?.activeGame == null || "home" in pages || "new" in pages
     fun openPage(destination: String) {
+        model.dismissHint()
         if (destination == "new" && homeVisible) return
         if (destination != page && (destination != "new" || data?.activeGame != null)) pages = pages + destination
     }
@@ -67,6 +71,11 @@ fun MinescapeApp(model: GameViewModel) {
     fun showHome() { pages = listOf("home") }
     var menuOpen by remember { mutableStateOf(false) }
     var replacing by remember { mutableStateOf<StartRequest?>(null) }
+    LaunchedEffect(incomingChallenge) {
+        if (incomingChallenge != null) {
+            pages = emptyList(); menuOpen = false; replacing = null; pasteChallenge = false; shareChallenge = false
+        }
+    }
     val owner = LocalLifecycleOwner.current
     var resumed by remember { mutableStateOf(owner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) }
     DisposableEffect(owner) {
@@ -74,7 +83,8 @@ fun MinescapeApp(model: GameViewModel) {
         owner.lifecycle.addObserver(observer)
         onDispose { owner.lifecycle.removeObserver(observer); model.setActive(false) }
     }
-    val paused = menuOpen || page != null || replacing != null || data?.recovered == true || busy != null || hintMessage != null || preview != null || pickerOpen || error != null
+    val overlayPaused = menuOpen || page != null || replacing != null || data?.recovered == true || busy != null || preview != null || pickerOpen || error != null || incomingChallenge != null || pasteChallenge || shareChallenge
+    val paused = overlayPaused || hintMessage != null
     LaunchedEffect(resumed, paused) { model.setActive(resumed && !paused) }
     // Close overlays first; the board returns to home, where Android owns Back.
     BackHandler((page == "new" || (!homeVisible && page == null) || error != null) &&
@@ -100,7 +110,7 @@ fun MinescapeApp(model: GameViewModel) {
     }
     fun daily(date: String) {
         val record = data?.dailyRecords?.get(date)
-        if (record != null && record.outcome != DailyOutcome.IN_PROGRESS) choose(StartRequest(practiceDate = date))
+        if (date != model.today() || record != null && record.outcome != DailyOutcome.IN_PROGRESS) choose(StartRequest(practiceDate = date))
         else choose(StartRequest(dailyDate = date))
     }
     val chooseConfig: (BoardConfig) -> Unit = { config -> choose(StartRequest(config = config,
@@ -112,8 +122,11 @@ fun MinescapeApp(model: GameViewModel) {
     }
     val menu: @Composable () -> Unit = {
         Box {
-            IconButton(onClick = { menuOpen = true }, modifier = Modifier.semantics { contentDescription = "Open menu" }) { Text("•••", fontWeight = FontWeight.Bold) }
+            IconButton(onClick = { model.dismissHint(); menuOpen = true }, modifier = Modifier.semantics { contentDescription = "Open menu" }) { Text("•••", fontWeight = FontWeight.Bold) }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(text = { Text("Open shared board") }, onClick = { menuOpen = false; pasteChallenge = true; model.dismissHint() })
+                if (data?.activeGame?.status != null && data?.activeGame?.status != GameStatus.READY)
+                    DropdownMenuItem(text = { Text("Share this board") }, onClick = { menuOpen = false; shareChallenge = true; model.dismissHint() })
                 listOf("New game" to "new", "Statistics" to "stats", "Settings" to "settings", "How to play" to "help", "Daily challenges" to "daily").forEach { (label, destination) ->
                     DropdownMenuItem(text = { Text(label) }, onClick = { menuOpen = false; openPage(destination) })
                 }
@@ -149,14 +162,25 @@ fun MinescapeApp(model: GameViewModel) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             } else if (homeVisible) {
                 HomeScreen(onChoose = chooseConfig, currentGame = loaded.activeGame, onResume = ::showGame,
-                    preferences = loaded.preferences, onPreferences = model::preferences, onDaily = { daily(model.today()) },
+                    preferences = loaded.preferences, onPreferences = model::preferences, onDaily = { openPage("daily") },
                     onLearn = { openPage("tutorial") }, onStatistics = { openPage("stats") })
             } else {
                 GameScreen(loaded.activeGame!!, model, loaded, onNew = { openPage("new") }, onReplay = replay,
                     onHome = ::showHome,
-                    inputEnabled = resumed && !paused, hintIndex = hint?.index, menu = menu, resultPresentation = resultPresentation!!)
+                    inputEnabled = resumed && !overlayPaused && (hintMessage == null || hint != null), hint = hint, menu = menu, resultPresentation = resultPresentation!!)
             }
         }
+    }
+    if (pasteChallenge) PasteChallengeDialog(model::receiveChallenge, onClose = { pasteChallenge = false })
+    if (shareChallenge) data?.activeGame?.let { ShareChallengeDialog(it, onClose = { shareChallenge = false }) }
+    if (incomingChallenge != null && data != null && preview == null && busy == null && data?.recovered != true) {
+        val snapshot = data!!
+        val challengeToday = model.today()
+        IncomingChallenge(incomingChallenge!!, snapshot, challengeToday, onOpen = {
+            model.openChallenge(incomingChallenge!!, snapshot.game?.id, snapshot.dailyGame?.id, challengeToday)
+            replacing = null; pasteChallenge = false; shareChallenge = false; menuOpen = false
+            showGame()
+        }, onClose = model::dismissChallenge)
     }
     when (page) {
         "stats" -> data?.let { StatisticsScreen(it, ::closePage) }
@@ -189,7 +213,8 @@ fun MinescapeApp(model: GameViewModel) {
     busy?.let { message ->
         ProgressDialog(message, model::cancelCalculation)
     }
-    hintMessage?.let { message ->
+    BackHandler(hint != null && !overlayPaused) { model.dismissHint() }
+    hintMessage?.takeIf { hint == null }?.let { message ->
         val target = hint
         val columns = data?.activeGame?.config?.columns ?: 1
         AlertDialog(onDismissRequest = model::dismissHint,
@@ -240,7 +265,8 @@ internal fun CustomBoard(onChoose: (BoardConfig) -> Unit, remembered: BoardConfi
 }
 
 @Composable
-private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: () -> Unit, onReplay: () -> Unit, onHome: () -> Unit, inputEnabled: Boolean, hintIndex: Int?, menu: @Composable () -> Unit, resultPresentation: ResultPresentation) {
+private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: () -> Unit, onReplay: () -> Unit, onHome: () -> Unit, inputEnabled: Boolean, hint: Hint?, menu: @Composable () -> Unit, resultPresentation: ResultPresentation) {
+    var hintAnswer by rememberSaveable(game.id, hint) { mutableStateOf(false) }
     val feedback = LocalHapticFeedback.current
     val details = resultPresentation.open
     val result = data.results.find { it.id == game.id }
@@ -255,9 +281,10 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
                 }
                 FilledTonalButton(onClick = resultPresentation.show, shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(horizontal = 12.dp)) { Text("View result", style = MaterialTheme.typography.labelMedium) }
             } else {
-                Counter("Mines", (game.config.mines - game.flags).toString(), Modifier.weight(1f).semantics { contentDescription = "Estimated mines remaining" })
+                Counter("Mines", (game.config.mines - game.flags).toString(), Modifier.weight(.8f).semantics { contentDescription = "Estimated mines remaining" })
                 Spacer(Modifier.width(8.dp))
-                Counter("Time", formatTime(game.elapsedMillis), Modifier.weight(1f).testTag("timer"))
+                GameClock(game.elapsedMillis, Modifier.weight(1.2f).testTag("timer"))
+                Spacer(Modifier.width(8.dp))
                 if (largeText) {
                     FilledTonalIconButton(onClick = onNew, modifier = Modifier.semantics { contentDescription = "New game" }) { Text("+", fontSize = 24.sp) }
                 } else {
@@ -278,7 +305,7 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
             Text(when (game.mode) { PlayMode.DAILY -> "Daily · ${game.dailyDate}"; PlayMode.PRACTICE -> "Practice · hints ${game.hintsUsed} · undos ${game.undosUsed} · mines hit ${game.minesHit}"; else -> "No-guess" },
                 modifier = Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.labelSmall)
         }
-        if (game.mode == PlayMode.PRACTICE && !game.finished) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        if (game.mode == PlayMode.PRACTICE && !game.finished && hint == null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             TextButton(onClick = model::requestHint, enabled = inputEnabled && game.status == GameStatus.PLAYING) { Text("Hint") }
             TextButton(onClick = model::undo, enabled = inputEnabled && game.undo.isNotEmpty()) { Text("Undo") }
         }
@@ -288,11 +315,13 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
                     if (data.preferences.haptics && (intent.action == CellAction.TOGGLE_FLAG)) feedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     model.cell(intent)
                 }
-            }, onViewport = { model.viewport(game.id, it) }, modifier = Modifier.weight(1f).fillMaxWidth(), inputEnabled = inputEnabled && !details, hintIndex = hintIndex,
+            }, onViewport = { model.viewport(game.id, it) }, modifier = Modifier.weight(1f).fillMaxWidth(), inputEnabled = inputEnabled && !details,
+                movesEnabled = inputEnabled && !details && hint == null, hintIndex = if (hintAnswer) hint?.index else null,
+                hintClues = hint?.clueIndices ?: emptySet(), hintCovered = hint?.coveredIndices ?: emptySet(),
                 holdMillis = data.preferences.holdMillis, tapToChord = data.preferences.tapToChord, questionMarks = data.preferences.questionMarks, controls = {
                 if (!game.finished) {
                     Spacer(Modifier.width(12.dp))
-                    FilledTonalIconToggleButton(checked = game.flagMode, onCheckedChange = { model.toggleFlagMode() }, enabled = inputEnabled,
+                    FilledTonalIconToggleButton(checked = game.flagMode, onCheckedChange = { model.toggleFlagMode() }, enabled = inputEnabled && hint == null,
                         colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -304,6 +333,7 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
                 }
             })
         }
+        if (hint != null) HintPanel(hint, hintAnswer, onAnswer = { hintAnswer = true }, onApply = model::applyHint, onClose = model::dismissHint)
     }
     if (details && game.finished) ResultDetailsDialog(game, result, official, onClose = resultPresentation.dismiss,
         onNew = { resultPresentation.dismiss(); onNew() },

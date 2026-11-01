@@ -1,19 +1,59 @@
-# Daily play links
+# Shared board and daily play links
 
-Status: store link implemented; dated puzzle links planned. Shared result text includes the Google Play listing at https://play.google.com/store/apps/details?id=com.cbulock.minescape through `DailyShare`, covering both the finished-result and daily-history entry points. This installs or opens the app; it does not open a specific dated puzzle. The result image remains spoiler-free and unchanged.
+Implemented in the Android app and `docs/play/`. Direct opening requires publishing the landing page, host-root association, and app update. Local tests cannot establish live domain verification.
 
-## Link contract
+## User flow
 
-- Once a domain and landing page are available, use an HTTPS URL with a versioned puzzle identity, such as `/daily/v1/2026-10-09` (path proposal only). Keep the ISO date in the URL; localize only the visible date. Version 1 identifies the existing frozen catalog and transformations.
-- Add the link to shared text centrally in `DailyShare` so both sharing entry points agree. Optionally add a short URL or QR code to the image once it resolves. Keep the link free of results, board data, personal information, or tracking parameters.
-- Configure verified Android App Links on the chosen domain. Installed users open the matching dated puzzle; other visitors get a useful landing page with installation instructions and, when published, the real Play Store listing. Do not promise automatic post-install puzzle restoration without implementing and testing it; keep the dated link available to reopen.
+- Updated app installed and domain verification enabled: a matching HTTPS link opens the board in Minescape. Confirm before replacing an unfinished destination game.
+- App missing, links disabled, or messaging app uses its own browser: the landing page offers **Open in Minescape**, Google Play, and **Copy puzzle link**. The app menu's **Open shared board** accepts pasted links.
+- After installation, reopen the original link. No deferred post-install restoration service is used.
+- Regular shared boards start as practice with a fresh identity and clock. Today's daily starts/resumes the official attempt; completed and past dailies start practice. Explicit resume actions retain access to a saved previous-day attempt.
 
-## Game behavior
+## Versioned contract
 
-- Validate the catalog version and date before navigation. Unsupported versions, invalid dates, and future puzzles need a clear explanation without changing saved games.
-- Today's unplayed puzzle starts the official daily attempt; an in-progress attempt resumes; a completed attempt offers practice. Past puzzles open as practice and must not replace today's official record.
-- Follow the existing saved-game replacement confirmation flow. Receiving or reopening a link alone must never overwrite progress. Preserve puzzle identity through installation, cold start, and activity recreation.
+Canonical URL: `https://cbulock.github.io/minescape/play/#d1.2026-11-01` or `https://cbulock.github.io/minescape/play/#b1.PAYLOAD`.
 
-## Launch checks
+Fallback: `minescape://play/#` with the same fragment. HTTPS accepts only the exact host/path, without query, port, or user info. Unsupported versions, malformed/future dates, and invalid payloads leave saves unchanged. Input is capped at 1,400 characters.
 
-Verify installed and uninstalled flows, app-link domain verification, malformed and unsupported links, date rollover across timezones, repeated opens, saved games, first-attempt rules, and spoiler-free sharing. Enable links only after the landing page and Android routing are live; a Play Store release can follow independently.
+Daily v1 uses the existing frozen catalog and transformations. Daily links contain no board or result data, and official result images remain decorative.
+
+Regular b1 is unpadded base64url of big-endian bytes:
+
+| Bytes | Value |
+| --- | --- |
+| 0-1 | Columns, rows (5-50 each) |
+| 2-3 | Mine count |
+| 4-5 | Safe original opening index |
+| 6-7 | Bitmap byte count, ceil(cells / 8) |
+| Next bitmap | Mine positions, low bit first within each byte |
+| Next bitmap | Original revealed opening positions |
+| Final 4 | CRC32 of preceding bytes |
+
+Maximum payload: 638 bytes. Counts, lengths, spare bits, safe opening, and CRC are validated before reconstruction. Adjacencies are recomputed. Imports never assert no-guess certification or qualify for normal records. The opening bitmap preserves openings affected by pre-opening flags without exporting the flags. Missing legacy openings use the safe retry fallback, explained in the share dialog.
+
+Fragments are not sent in HTTP requests. Regular board layouts are encoded, not encrypted: this is casual sharing, not cheating-resistant competition. The page displays no solution or moves. No backend, accounts, analytics, or Android internet permission is added.
+
+## Required host-root deployment
+
+Android requires `https://cbulock.github.io/.well-known/assetlinks.json`. A file under `/minescape/.well-known/` does not verify the host. Manage the host-root site separately (normally the `cbulock.github.io` repository), or deliberately migrate the canonical URL and manifest host to a controlled domain.
+
+1. Obtain the **app signing key certificate SHA-256** from Play Console's app integrity/signing page. An upload-key fingerprint alone does not verify Play-installed builds.
+2. Generate the root association using the helper in this repository:
+
+   ```powershell
+   python scripts/prepare-app-links.py --fingerprint 'ACTUAL_SHA256_FROM_PLAY' --output 'PATH_TO_HOST_SITE/.well-known/assetlinks.json'
+   ```
+
+   Repeat `--fingerprint` for all supported signing certificates. Other applications' associations are preserved. If using Jekyll, explicitly include `.well-known` or disable Jekyll so the dot-directory is published.
+3. Publish the root file over HTTPS, with JSON content type and no redirects. Publish `docs/play/` through the existing Pages site.
+4. Release the updated app and verify a Play-installed build on a device:
+
+   ```powershell
+   adb shell pm verify-app-links --re-verify com.cbulock.minescape
+   adb shell pm get-app-links com.cbulock.minescape
+   adb shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d 'https://cbulock.github.io/minescape/play/#d1.2026-11-01'
+   ```
+
+   Use an available date and allow verification to finish; the host must report verified. Test actual messaging/browser taps, cold/warm launch, disabled supported links, installation/reopen, cancellation, date rollover, and both unfinished game slots.
+
+The implementation session could not access the root repository through the GitHub connector (404). It did not publish an association or invent a Play fingerprint. Publication and real-device verification remain release requirements.

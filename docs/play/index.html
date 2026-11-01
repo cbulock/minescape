@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6554d9">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="A Minescape puzzle is waiting for you. Open it in the Android app or install Minescape to play.">
+  <meta property="og:title" content="Play a Minescape puzzle">
+  <meta property="og:description" content="Same board. Your own deductions. A shared Minesweeper challenge for Android.">
+  <title>Play a shared puzzle · Minescape</title>
+  <link rel="icon" href="../assets/minescape-icon.png">
+  <link rel="stylesheet" href="../styles.css?v=4">
+  <style>
+    .challenge-shell{max-width:640px;margin:7vh auto;padding:24px}
+    .challenge-card{background:#fcfbff;border:1px solid #ddd7ef;border-radius:28px;padding:clamp(24px,5vw,44px);box-shadow:0 16px 60px #34285a12}
+    .challenge-card h1{font-size:clamp(2rem,7vw,3rem);line-height:1.1;margin:24px 0 16px}
+    .challenge-card p{line-height:1.65}.challenge-actions{display:flex;flex-direction:column;gap:12px;margin:28px 0}
+    .challenge-actions .button{text-align:center;justify-content:center;font:inherit;cursor:pointer}
+    .challenge-card textarea{width:100%;box-sizing:border-box;min-height:90px;border:1px solid #b8afce;border-radius:12px;padding:12px;font:inherit;background:#fff;color:#282640;overflow-wrap:anywhere}
+    .challenge-card small{display:block;line-height:1.6}.challenge-card [hidden]{display:none}.challenge-brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:1.2rem}
+    .challenge-brand img{width:44px;height:44px;border-radius:12px}#status{min-height:1.5em}
+  </style>
+  <script src="play.js" defer></script>
+</head>
+<body>
+  <main class="challenge-shell">
+    <article class="challenge-card">
+      <a class="challenge-brand" href="../"><img src="../assets/minescape-icon.png" alt="">Minescape</a>
+      <h1 id="title">A puzzle is waiting.</h1>
+      <p id="description">Open a shared Minescape link to play the same puzzle on your Android device.</p>
+      <div class="challenge-actions">
+        <a class="button button-primary" id="open-app" hidden>Open in Minescape</a>
+        <a class="button button-secondary" href="https://play.google.com/store/apps/details?id=com.cbulock.minescape">Get Minescape on Google Play</a>
+        <button class="button button-secondary" id="copy-link" type="button" hidden>Copy puzzle link</button>
+      </div>
+      <p id="instructions" hidden>Already installed? Choose <strong>Open in Minescape</strong>. If your browser stays here, copy the link and choose <strong>Open shared board</strong> in the app menu.</p>
+      <p>Installing for the first time? After installation, return to this link to open the puzzle. Use the latest version of Minescape.</p>
+      <label id="manual-label" for="manual-link" hidden>Puzzle link — select and copy</label>
+      <textarea id="manual-link" readonly hidden></textarea>
+      <p id="status" role="status" aria-live="polite"></p>
+      <small>No account needed. No board spoilers. Minescape is an offline Minesweeper game for Android.</small>
+      <noscript><p>Enable JavaScript to open this puzzle, or copy this page's full address and paste it into Minescape's <strong>Open shared board</strong> menu.</p></noscript>
+    </article>
+  </main>
+</body>
+</html>

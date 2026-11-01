@@ -58,7 +58,7 @@ class DailyShareTest {
         try {
             for (zone in listOf("Pacific/Kiritimati", "America/Los_Angeles")) {
                 TimeZone.setDefault(TimeZone.getTimeZone(zone))
-                assertEquals("Minescape Daily · Oct 9, 2026\nWon · 01:27\nFirst attempt · Intermediate · No-guess\n\nGet Minescape on Google Play:\nhttps://play.google.com/store/apps/details?id=com.cbulock.minescape",
+                assertEquals("Minescape Daily · Oct 9, 2026\nWon · 01:27\nFirst attempt · Intermediate · No-guess\n\nPlay this puzzle:\nhttps://cbulock.github.io/minescape/play/#d1.2026-10-09\n\nGet Minescape on Google Play:\nhttps://play.google.com/store/apps/details?id=com.cbulock.minescape",
                     DailyShare.text(record, Locale.US))
                 assertTrue(DailyShare.text(record, Locale.GERMANY).startsWith("Minescape Daily · 09.10.2026\n"))
                 assertFalse(DailyShare.text(record, Locale.JAPAN).contains("UTC"))

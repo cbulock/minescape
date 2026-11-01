@@ -17,6 +17,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.*
@@ -33,7 +34,8 @@ import kotlin.math.roundToInt
 @Composable
 fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Unit, modifier: Modifier = Modifier, controls: @Composable RowScope.() -> Unit = {}, inputEnabled: Boolean = true, hintIndex: Int? = null,
     holdMillis: Long? = null, tapToChord: Boolean = true, questionMarks: Boolean = false, tagPrefix: String = "",
-    effectsEnabled: Boolean = inputEnabled) {
+    effectsEnabled: Boolean = inputEnabled, hintClues: Set<Int> = emptySet(), hintCovered: Set<Int> = emptySet(),
+    movesEnabled: Boolean = inputEnabled) {
     var viewport by remember(game.id) { mutableStateOf(game.viewport) }
     var area by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current.density
@@ -61,13 +63,13 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
     Column(modifier) {
         Box(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(colors.surfaceVariant.copy(alpha = .55f))
             .padding(8.dp).onSizeChanged { area = it }.testTag("${tagPrefix}board")
-            .pointerInput(game.id, game.flagMode, game.finished, inputEnabled, area, density, game.viewport, holdMillis, tapToChord, questionMarks) {
+            .pointerInput(game.id, game.flagMode, game.finished, inputEnabled, movesEnabled, area, density, game.viewport, holdMillis, tapToChord, questionMarks) {
                 awaitEachGesture {
                     val first = awaitFirstDown(requireUnconsumed = true)
                     if (!inputEnabled) return@awaitEachGesture
                     val anchorGeometry = currentGeometry
                     // Completed rounds have no cell target, but still accept viewport gestures.
-                    val anchor = if (game.finished) null else anchorGeometry.hit(first.position.x / currentDensity, first.position.y / currentDensity)
+                    val anchor = if (game.finished || !movesEnabled) null else anchorGeometry.hit(first.position.x / currentDensity, first.position.y / currentDensity)
                     if (anchorGeometry.cell < 32f && anchor != null) {
                         viewport = anchorGeometry.transform(32f / anchorGeometry.cell, 0f, 0f,
                             first.position.x / currentDensity, first.position.y / currentDensity)
@@ -156,6 +158,13 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                     drawRoundRect(fill, origin, tileSize, rounding)
                     if (index == pendingTarget || index == hintIndex) drawRoundRect(colors.primary, origin, tileSize, rounding,
                         style = Stroke((2 * density).coerceAtMost(cellSize * .1f)))
+                    if (index in hintClues || index in hintCovered) drawRoundRect(
+                        if (index in hintClues) colors.primary else colors.tertiary, origin, tileSize, rounding,
+                        style = Stroke(2 * density, pathEffect = if (index in hintCovered) PathEffect.dashPathEffect(floatArrayOf(4 * density, 3 * density)) else null))
+                    if (index == hintIndex) drawRoundRect(colors.primary,
+                        origin + Offset(4 * density, 4 * density),
+                        Size((tileSize.width - 8 * density).coerceAtLeast(1f), (tileSize.height - 8 * density).coerceAtLeast(1f)), rounding,
+                        style = Stroke(2 * density))
                     val center = Offset(x + cellSize / 2, y + cellSize / 2)
                     when {
                         cell.flagged && !wrongFlag -> {
@@ -209,8 +218,8 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                                 !cell.revealed -> "Covered"
                                 cell.adjacent == 0 -> "Empty"
                                 else -> "${cell.adjacent} adjacent mines"
-                            }
-                            if (!game.finished && inputEnabled) {
+                            } + when { index == hintIndex -> ", Hint answer"; index in hintClues -> ", Supporting clue"; index in hintCovered -> ", Hint region"; else -> "" }
+                            if (!game.finished && inputEnabled && movesEnabled) {
                                 if (!cell.revealed || tapToChord) onClick(if (cell.revealed) "Reveal surrounding cells" else if (game.flagMode) "Toggle flag" else "Reveal") { onCell(CellIntent(game.id, index, if (cell.revealed) CellAction.CHORD else if (game.flagMode) CellAction.TOGGLE_FLAG else CellAction.REVEAL, game.flagMode, fromTap = cell.revealed)); true }
                                 customActions = if (!cell.revealed) listOf(CustomAccessibilityAction(if (questionMarks) "Cycle flag, question mark, clear" else "Toggle flag") { onCell(CellIntent(game.id, index, CellAction.TOGGLE_FLAG, game.flagMode)); true })
                                 else listOf(CustomAccessibilityAction("Reveal surrounding cells") { onCell(CellIntent(game.id, index, CellAction.CHORD, game.flagMode)); true })

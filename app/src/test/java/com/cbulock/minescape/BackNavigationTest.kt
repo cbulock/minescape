@@ -267,7 +267,7 @@ class BackNavigationTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             val regular = Game(BoardConfig.preset(Difficulty.BEGINNER))
             initialize(scenario, AppData(game = regular))
-            model.startDaily("2026-10-10")
+            model.startDaily()
             compose.waitUntil(10000) { compose.waitForIdle(); model.data.value?.activeSlot == ActiveSlot.DAILY }
             val daily = model.data.value!!.dailyGame!!
             menu("New game")

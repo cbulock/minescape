@@ -3,10 +3,22 @@
     <application android:name=".MinescapeApplication" android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/data_extraction_rules" android:label="@string/app_name"
         android:icon="@mipmap/ic_minescape" android:roundIcon="@mipmap/ic_minescape"
         android:supportsRtl="true" android:theme="@style/Theme.Minescape">
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="cbulock.github.io" android:pathPrefix="/minescape/play/" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="minescape" android:host="play" android:path="/" />
             </intent-filter>
         </activity>
         <provider android:name=".ShareCardProvider" android:authorities="${applicationId}.files"

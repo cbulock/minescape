@@ -14,6 +14,7 @@ import androidx.core.graphics.createBitmap
 import com.cbulock.minescape.data.DailyOutcome
 import com.cbulock.minescape.data.DailyRecord
 import com.cbulock.minescape.game.formatTime
+import com.cbulock.minescape.game.ChallengeLink
 import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -29,7 +30,7 @@ object DailyShare {
 
     fun text(record: DailyRecord, locale: Locale = Locale.getDefault()): String {
         require(record.outcome == DailyOutcome.WON || record.outcome == DailyOutcome.LOST)
-        return "Minescape Daily · ${date(record, locale)}\n${if (record.outcome == DailyOutcome.WON) "Won" else "Lost"} · ${formatTime(record.elapsedMillis)}\nFirst attempt · Intermediate · No-guess\n\nGet Minescape on Google Play:\n$PLAY_STORE_URL"
+        return "Minescape Daily · ${date(record, locale)}\n${if (record.outcome == DailyOutcome.WON) "Won" else "Lost"} · ${formatTime(record.elapsedMillis)}\nFirst attempt · Intermediate · No-guess\n\nPlay this puzzle:\n${ChallengeLink.daily(record.date)}\n\nGet Minescape on Google Play:\n$PLAY_STORE_URL"
     }
     fun card(record: DailyRecord, locale: Locale = Locale.getDefault()): Bitmap {
         text(record, locale)
