@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
@@ -15,8 +14,8 @@ android {
         applicationId = "com.cbulock.minescape"
         minSdk = 26
         targetSdk = 36
-        versionCode = extra["appVersionCode"] as Int
-        versionName = extra["appVersionName"] as String
+        versionCode = project.extra["appVersionCode"] as Int
+        versionName = project.extra["appVersionName"] as String
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -25,17 +24,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     testOptions { unitTests.isIncludeAndroidResources = true }
-    sourceSets.getByName("test").java.srcDir("src/androidTest/java")
+    sourceSets.getByName("test").kotlin.directories += "src/androidTest/java"
     buildTypes {
         release {
+            // AGP 9 enables optimized resource shrinking alongside these release optimizations.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
 }
-
-kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2026.06.01")

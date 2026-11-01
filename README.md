@@ -60,7 +60,9 @@ Use a full Git clone (`git fetch --unshallow` for an existing shallow clone). Bo
 
 On Windows, `./scripts/test-versioning.ps1` checks baseline, next-commit, retry, merge, major/minor reset, and shallow-clone behavior using the actual Gradle script in temporary Git repositories.
 
-Open this folder in Android Studio, let Gradle sync, and run `app` on a device or emulator. Install Android SDK Platform 36.1 and Build Tools 35.0.0 through SDK Manager if prompted. Use JDK 17 or newer (Android Studio's bundled JDK works).
+Open this folder in Android Studio, let Gradle sync, and run `app` on a device or emulator. Install Android SDK Platform 36.1 and Build Tools 36.0.0 through SDK Manager if prompted. Use JDK 17 or newer (Android Studio's bundled JDK works). The project uses Android Gradle Plugin 9.0.1, Gradle 9.1.0, and built-in Kotlin support.
+
+Release builds enable code and resource shrinking; AGP 9 also enables optimized resource shrinking by default. Validate changes to the build toolchain with `testDebugUnitTest lintRelease bundleRelease` so checks exercise the same optimized bundle used for Google Play.
 
 On Windows PowerShell:
 
