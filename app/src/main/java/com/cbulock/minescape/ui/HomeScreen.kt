@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cbulock.minescape.R
 import com.cbulock.minescape.data.Preferences
 import com.cbulock.minescape.game.*
 
@@ -35,11 +36,12 @@ internal fun HomeScreen(
     onLearn: () -> Unit,
     onStatistics: () -> Unit,
 ) {
+    val strings = textResources()
     var custom by rememberSaveable { mutableStateOf(false) }
     var options by rememberSaveable { mutableStateOf(false) }
     val colors = MaterialTheme.colorScheme
-    val mode = if (preferences.generation == GenerationMode.NO_GUESS) "No-guess" else "Classic"
-    val modeSummary = "$mode · ${if (preferences.practice) "Practice" else "Standard"}"
+    val mode = if (preferences.generation == GenerationMode.NO_GUESS) strings(R.string.no_guess) else strings(R.string.classic)
+    val modeSummary = strings(R.string.formatted_value, mode, if (preferences.practice) strings(R.string.practice) else strings(R.string.standard))
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             Modifier.widthIn(max = 560.dp).fillMaxWidth().verticalScroll(rememberScrollState())
@@ -50,18 +52,18 @@ internal fun HomeScreen(
                 Card(onClick = onResume, colors = CardDefaults.cardColors(containerColor = colors.primaryContainer, contentColor = colors.onSurface), shape = RoundedCornerShape(20.dp)) {
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(if (currentGame.finished) "View last game" else "Back to current game", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text("${if (currentGame.dailyDate != null) "Daily" else currentGame.config.difficulty.title} · ${formatTime(currentGame.elapsedMillis)}", style = MaterialTheme.typography.bodyMedium)
+                            Text(if (currentGame.finished) strings(R.string.view_last_game) else strings(R.string.back_to_current_game), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text(strings(R.string.formatted_value, if (currentGame.dailyDate != null) strings(R.string.daily_2) else strings.difficulty(currentGame.config.difficulty), strings.time(currentGame.elapsedMillis)), style = MaterialTheme.typography.bodyMedium)
                         }
                         Text("→", Modifier.padding(start = 12.dp), style = MaterialTheme.typography.titleLarge)
                     }
                 }
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Choose your board", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(strings(R.string.choose_your_board), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 Surface(
                     onClick = { options = true }, shape = RoundedCornerShape(12.dp), color = Color.Transparent,
-                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Game options" },
+                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = strings(R.string.game_options) },
                 ) {
                     FlowRow(
                         Modifier.heightIn(min = 48.dp).padding(vertical = 8.dp),
@@ -69,7 +71,7 @@ internal fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(modeSummary, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
-                        Text("Game options", style = MaterialTheme.typography.labelLarge, color = colors.primary)
+                        Text(strings(R.string.game_options), style = MaterialTheme.typography.labelLarge, color = colors.primary)
                     }
                 }
                 Surface(shape = RoundedCornerShape(24.dp), color = colors.surfaceContainer) {
@@ -78,7 +80,7 @@ internal fun HomeScreen(
                             val config = BoardConfig.preset(difficulty)
                             val accent = when (index) { 0 -> colors.secondary; 1 -> colors.primary; else -> colors.tertiary }
                             Row(
-                                Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = "Start ${difficulty.title} game") { onChoose(config) }
+                                Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = strings(R.string.start_game, strings.difficulty(difficulty))) { onChoose(config) }
                                     .heightIn(min = 80.dp).padding(horizontal = 16.dp, vertical = 14.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -87,8 +89,8 @@ internal fun HomeScreen(
                                     Spacer(Modifier.width(16.dp))
                                 }
                                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                    Text(difficulty.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                                    Text("${config.columns} × ${config.rows} · ${config.mines} mines", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                                    Text(strings.difficulty(difficulty), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                                    Text(strings.quantity(R.plurals.board_summary, config.mines, config.columns, config.rows, config.mines), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                                 }
                                 Text("›", Modifier.padding(start = 8.dp), color = colors.onSurfaceVariant, style = MaterialTheme.typography.titleLarge)
                             }
@@ -97,13 +99,13 @@ internal fun HomeScreen(
                     }
                 }
                 TextButton(onClick = { custom = !custom }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text(if (custom) "Hide custom board" else "Make a custom board")
+                    Text(if (custom) strings(R.string.hide_custom_board) else strings(R.string.make_a_custom_board))
                 }
                 if (custom) {
                     Surface(shape = RoundedCornerShape(20.dp), color = colors.surfaceContainer) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Custom board", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text("Classic boards · ${if (preferences.practice) "Practice with hints and undo" else "Standard play"}", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                            Text(strings(R.string.custom_board), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text(strings(R.string.classic_boards, if (preferences.practice) strings(R.string.practice_with_hints_and_undo) else strings(R.string.standard_play)), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                             CustomBoard(onChoose, preferences.lastCustom)
                         }
                     }
@@ -112,34 +114,34 @@ internal fun HomeScreen(
             Card(onClick = onDaily, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = colors.primaryContainer, contentColor = colors.onSurface)) {
                 Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Daily challenge", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text("Intermediate · No-guess", style = MaterialTheme.typography.bodyMedium)
+                        Text(strings(R.string.daily_challenge), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(strings(R.string.intermediate_no_guess), style = MaterialTheme.typography.bodyMedium)
                     }
                     Text("→", Modifier.padding(start = 12.dp), style = MaterialTheme.typography.titleLarge)
                 }
             }
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                TextButton(onClick = onLearn) { Text("Learn to play") }
-                TextButton(onClick = onStatistics) { Text("Statistics") }
+                TextButton(onClick = onLearn) { Text(strings(R.string.learn_to_play)) }
+                TextButton(onClick = onStatistics) { Text(strings(R.string.statistics)) }
             }
         }
     }
     if (options) {
         AlertDialog(
             onDismissRequest = { options = false },
-            title = { Text("Game options") },
+            title = { Text(strings(R.string.game_options)) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    HomeOption("Practice", "Hints and undo · records unaffected", "Practice mode", preferences.practice) {
+                    HomeOption(strings(R.string.practice), strings(R.string.hints_and_undo_records_unaffected), strings(R.string.practice_mode), preferences.practice) {
                         onPreferences(preferences.copy(practice = it))
                     }
-                    HomeOption("No-guess presets", "Every move can be deduced. Applies to Beginner, Intermediate, and Expert.", "No-guess presets", preferences.generation == GenerationMode.NO_GUESS) {
+                    HomeOption(strings(R.string.no_guess_presets), strings(R.string.every_move_can_be_deduced_applies_to_beginner_intermediate), strings(R.string.no_guess_presets), preferences.generation == GenerationMode.NO_GUESS) {
                         onPreferences(preferences.copy(generation = if (it) GenerationMode.NO_GUESS else GenerationMode.CLASSIC))
                     }
-                    Text("These options are saved for your next games. Daily challenges use their own rules.", style = MaterialTheme.typography.bodySmall)
+                    Text(strings(R.string.these_options_are_saved_for_your_next_games_daily), style = MaterialTheme.typography.bodySmall)
                 }
             },
-            confirmButton = { TextButton(onClick = { options = false }) { Text("Done") } },
+            confirmButton = { TextButton(onClick = { options = false }) { Text(strings(R.string.done)) } },
         )
     }
 }

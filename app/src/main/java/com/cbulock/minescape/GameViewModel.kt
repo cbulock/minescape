@@ -1,5 +1,6 @@
 package com.cbulock.minescape
 
+import com.cbulock.minescape.ui.UiMessage
 import android.app.Application
 import android.net.Uri
 import android.os.SystemClock
@@ -21,13 +22,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         application.assets.open("daily-v1.json").bufferedReader().use { it.readText() })) }
     private val mutableData = MutableStateFlow<AppData?>(null)
     val data = mutableData.asStateFlow()
-    private val mutableError = MutableStateFlow<String?>(null)
+    private val mutableError = MutableStateFlow<UiMessage?>(null)
     val error = mutableError.asStateFlow()
-    private val mutableBusy = MutableStateFlow<String?>(null)
+    private val mutableBusy = MutableStateFlow<UiMessage?>(null)
     val busy = mutableBusy.asStateFlow()
     private val mutableHint = MutableStateFlow<Hint?>(null)
     val hint = mutableHint.asStateFlow()
-    private val mutableHintMessage = MutableStateFlow<String?>(null)
+    private val mutableHintMessage = MutableStateFlow<UiMessage?>(null)
     val hintMessage = mutableHintMessage.asStateFlow()
     private val mutablePreview = MutableStateFlow<BackupPreview?>(null)
     val preview = mutablePreview.asStateFlow()
@@ -42,7 +43,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     init {
         viewModelScope.launch {
             try { repository.data.collect { mutableData.value = it } }
-            catch (_: IOException) { mutableError.value = "Your save could not be opened. Free some storage and reopen the app." }
+            catch (_: IOException) { mutableError.value = UiMessage.Resource(R.string.your_save_could_not_be_opened_free_some_storage) }
         }
         viewModelScope.launch {
             for (command in commands) {
@@ -55,7 +56,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         command.change(timed).recordResult()
                     }
                     if (saveFailed) { mutableError.value = null; saveFailed = false }
-                } catch (_: IOException) { saveFailed = true; mutableError.value = "Progress could not be saved. Check free storage and try again." }
+                } catch (_: IOException) { saveFailed = true; mutableError.value = UiMessage.Resource(R.string.progress_could_not_be_saved_check_free_storage_and) }
                 lastTime = command.at
                 command.active?.let { active = it }
             }
@@ -129,13 +130,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (snapshot.generation == GenerationMode.NO_GUESS && snapshot.status == GameStatus.READY && intent.action == CellAction.REVEAL &&
             snapshot.cells.getOrNull(intent.index)?.flagged == false) {
             val token = ++calculationToken
-            mutableBusy.value = "Preparing a no-guess board…"
+            mutableBusy.value = UiMessage.Resource(R.string.preparing_no_guess, cancellable = true)
             calculation = viewModelScope.launch {
                 try {
                     val generated = withContext(Dispatchers.Default) { NoGuessGenerator.generate(snapshot, intent.index) }
                     if (token != calculationToken) return@launch
                     if (generated == null) {
-                        mutableHintMessage.value = "A no-guess board could not be prepared within the limit. Retry your opening or choose classic."
+                        mutableHintMessage.value = UiMessage.Resource(R.string.a_no_guess_board_could_not_be_prepared_within)
                         mutableBusy.value = null
                     } else submit { old ->
                         if (token == calculationToken) mutableBusy.value = null
@@ -167,7 +168,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val snapshot = data.value?.activeGame ?: return
         if (snapshot.mode != PlayMode.PRACTICE || snapshot.status != GameStatus.PLAYING || mutableBusy.value != null) return
         val token = ++calculationToken
-        mutableBusy.value = "Finding a deduction…"
+        mutableBusy.value = UiMessage.Resource(R.string.finding_a_deduction, cancellable = true)
         calculation = viewModelScope.launch {
             try {
                 val context = currentCoroutineContext()
@@ -176,7 +177,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 mutableBusy.value = null
                 if (data.value?.activeGame?.id != snapshot.id || data.value?.activeGame?.cells != snapshot.cells) return@launch
                 mutableHint.value = found
-                mutableHintMessage.value = found?.explanation ?: "No supported logical deduction is available. Flags are not assumed to be correct."
+                mutableHintMessage.value = found?.let(UiMessage::Deduction) ?: UiMessage.Resource(R.string.no_supported_logical_deduction_is_available_flags_are_not)
                 if (found != null) submit { old -> if (old.activeGame?.id == snapshot.id)
                     old.withActiveGame(old.activeGame!!.copy(hintsUsed = old.activeGame!!.hintsUsed + 1)) else old }
             } catch (_: CancellationException) { }
@@ -203,7 +204,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun exportBackup(uri: Uri) {
         submit(active = false)
-        mutableBusy.value = "Exporting backup…"
+        mutableBusy.value = UiMessage.Resource(R.string.exporting_backup)
         viewModelScope.launch {
             try {
                 // A barrier command takes a timed snapshot after all previous game commands.
@@ -215,17 +216,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     getApplication<Application>().contentResolver.openOutputStream(uri, "wt")?.use { it.write(bytes) }
                         ?: throw IOException("Cannot open destination")
                 }
-            } catch (_: Exception) { mutableError.value = "Backup could not be written. Choose another location and try again." }
+            } catch (_: Exception) { mutableError.value = UiMessage.Resource(R.string.backup_could_not_be_written_choose_another_location_and) }
             finally { mutableBusy.value = null }
         }
     }
     fun importBackup(uri: Uri) {
-        cancelCalculation(); mutableBusy.value = "Checking backup…"
+        cancelCalculation(); mutableBusy.value = UiMessage.Resource(R.string.checking_backup)
         viewModelScope.launch {
             try { mutablePreview.value = withContext(Dispatchers.IO) {
                 getApplication<Application>().contentResolver.openInputStream(uri)?.use(Backups::preview)
                     ?: throw IOException("Cannot open backup")
-            } } catch (_: Exception) { mutableError.value = "This backup could not be read or is invalid. Your progress has not changed." }
+            } } catch (_: Exception) { mutableError.value = UiMessage.Resource(R.string.this_backup_could_not_be_read_or_is_invalid) }
             finally { mutableBusy.value = null }
         }
     }

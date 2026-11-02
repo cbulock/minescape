@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
@@ -15,8 +14,8 @@ android {
         applicationId = "com.cbulock.minescape"
         minSdk = 26
         targetSdk = 36
-        versionCode = extra["appVersionCode"] as Int
-        versionName = extra["appVersionName"] as String
+        versionCode = project.extra["appVersionCode"] as Int
+        versionName = project.extra["appVersionName"] as String
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -25,10 +24,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     testOptions { unitTests.isIncludeAndroidResources = true }
-    sourceSets.getByName("test").java.srcDir("src/androidTest/java")
+    sourceSets.getByName("test").kotlin.directories.add("src/androidTest/java")
     buildTypes {
+        debug { isPseudoLocalesEnabled = true }
         release {
             isMinifyEnabled = true
+            // AGP 9 integrates resource shrinking with R8's code optimization.
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }

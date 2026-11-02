@@ -4,25 +4,31 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlin.random.Random
 
-data class Hint(val index: Int, val mine: Boolean, val explanation: String)
+sealed interface HintReason {
+    data class Clue(val row: Int, val column: Int, val adjacent: Int) : HintReason
+    data class BoardTotal(val mines: Int) : HintReason
+    data class Comparison(val large: HintReason, val small: HintReason) : HintReason
+}
+
+data class Hint(val index: Int, val mine: Boolean, val reason: HintReason, val coveredSquares: Int)
 
 /** Reads only revealed clue values, revealed positions, dimensions and the public mine count. */
 object LogicSolver {
-    private data class Constraint(val squares: Set<Int>, val count: Int, val reason: String)
+    private data class Constraint(val squares: Set<Int>, val count: Int, val reason: HintReason)
     fun hint(game: Game, keepGoing: () -> Boolean = { true }): Hint? {
         if (game.status != GameStatus.PLAYING) return null
         val hidden = game.cells.indices.filter { !game.cells[it].revealed }.toSet()
         val constraints = linkedMapOf<Set<Int>, Constraint>()
-        fun add(squares: Set<Int>, count: Int, reason: String): Boolean {
+        fun add(squares: Set<Int>, count: Int, reason: HintReason): Boolean {
             if (squares.isEmpty() || count !in 0..squares.size || constraints.containsKey(squares)) return false
             if (constraints.size >= 2048) return false
-            constraints[squares] = Constraint(squares, count, reason.take(600)); return true
+            constraints[squares] = Constraint(squares, count, reason); return true
         }
         game.cells.forEachIndexed { i, c -> if (c.revealed) {
             add(GameEngine.neighbors(game.config, i).filter { it in hidden }.toSet(), c.adjacent,
-                "The clue at row ${i / game.config.columns + 1}, column ${i % game.config.columns + 1} is ${c.adjacent}.")
+                HintReason.Clue(i / game.config.columns + 1, i % game.config.columns + 1, c.adjacent))
         } }
-        add(hidden, game.config.mines, "There are ${game.config.mines} mines in the whole board.")
+        add(hidden, game.config.mines, HintReason.BoardTotal(game.config.mines))
         val knownMines = mutableSetOf<Int>()
         repeat(game.config.size * 2) {
             if (!keepGoing()) return null
@@ -34,11 +40,11 @@ object LogicSolver {
                 if (remaining.isEmpty()) continue
                 if (count == 0) {
                     val i = remaining.minOrNull()!!
-                    return Hint(i, false, "${c.reason} After accounting for the proven mines, these ${remaining.size} covered squares contain no mines. This square is safe.")
+                    return Hint(i, false, c.reason, remaining.size)
                 }
                 if (count == remaining.size) {
                     val i = remaining.sorted().firstOrNull { !game.cells[it].flagged }
-                    if (i != null) return Hint(i, true, "${c.reason} The remaining ${remaining.size} covered squares must all be mines. Flag this square.")
+                    if (i != null) return Hint(i, true, c.reason, remaining.size)
                     changed = knownMines.addAll(remaining) || changed
                 }
                 changed = add(remaining, count, c.reason) || changed
@@ -49,7 +55,7 @@ object LogicSolver {
                 if (large.squares.size > 16 || small.squares.size >= large.squares.size || !large.squares.containsAll(small.squares)) continue
                 val difference = large.squares - small.squares
                 changed = add(difference, large.count - small.count,
-                    "Comparing deductions: ${large.reason} ${small.reason}") || changed
+                    HintReason.Comparison(large.reason, small.reason)) || changed
             }
             if (!changed) return null
         }

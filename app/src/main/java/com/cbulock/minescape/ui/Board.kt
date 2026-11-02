@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -30,6 +31,7 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.cbulock.minescape.R
 import com.cbulock.minescape.game.*
 import kotlin.math.roundToInt
 
@@ -37,6 +39,7 @@ import kotlin.math.roundToInt
 fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Unit, modifier: Modifier = Modifier, controls: @Composable RowScope.() -> Unit = {}, inputEnabled: Boolean = true, hintIndex: Int? = null,
     holdMillis: Long? = null, tapToChord: Boolean = true, questionMarks: Boolean = false, tagPrefix: String = "",
     effectsEnabled: Boolean = inputEnabled) {
+    val strings = textResources()
     var viewport by remember(game.id) { mutableStateOf(game.viewport) }
     var area by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current.density
@@ -202,21 +205,22 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                 val x = geometry.left + geometry.column(index) * geometry.cell
                 val y = geometry.top + geometry.row(index) * geometry.cell
                 if (x + geometry.cell > 0 && y + geometry.cell > 0 && x < geometry.width && y < geometry.height) {
-                    Box(Modifier.offset { IntOffset((x * density).roundToInt(), (y * density).roundToInt()) }
+                    // Canvas coordinates are physical, independent of the UI's text direction.
+                    Box(Modifier.align(AbsoluteAlignment.TopLeft).absoluteOffset { IntOffset((x * density).roundToInt(), (y * density).roundToInt()) }
                         .size(geometry.cell.dp).semantics {
-                            contentDescription = "Row ${index / game.config.columns + 1}, column ${index % game.config.columns + 1}"
+                            contentDescription = strings(R.string.cell_position, index / game.config.columns + 1, index % game.config.columns + 1)
                             stateDescription = when {
-                                game.finished && cell.mine -> "Mine"
-                                cell.flagged -> "Flagged"
-                                cell.questioned -> "Question mark"
-                                !cell.revealed -> "Covered"
-                                cell.adjacent == 0 -> "Empty"
-                                else -> "${cell.adjacent} adjacent mines"
+                                game.finished && cell.mine -> strings(R.string.mine)
+                                cell.flagged -> strings(R.string.flagged)
+                                cell.questioned -> strings(R.string.question_mark)
+                                !cell.revealed -> strings(R.string.covered)
+                                cell.adjacent == 0 -> strings(R.string.empty)
+                                else -> strings.quantity(R.plurals.adjacent_mines, cell.adjacent, cell.adjacent)
                             }
                             if (!game.finished && inputEnabled) {
-                                if (!cell.revealed || tapToChord) onClick(if (cell.revealed) "Reveal surrounding cells" else if (game.flagMode) "Toggle flag" else "Reveal") { onCell(CellIntent(game.id, index, if (cell.revealed) CellAction.CHORD else if (game.flagMode) CellAction.TOGGLE_FLAG else CellAction.REVEAL, game.flagMode, fromTap = cell.revealed)); true }
-                                customActions = if (!cell.revealed) listOf(CustomAccessibilityAction(if (questionMarks) "Cycle flag, question mark, clear" else "Toggle flag") { onCell(CellIntent(game.id, index, CellAction.TOGGLE_FLAG, game.flagMode)); true })
-                                else listOf(CustomAccessibilityAction("Reveal surrounding cells") { onCell(CellIntent(game.id, index, CellAction.CHORD, game.flagMode)); true })
+                                if (!cell.revealed || tapToChord) onClick(if (cell.revealed) strings(R.string.reveal_surrounding_cells) else if (game.flagMode) strings(R.string.toggle_flag) else strings(R.string.reveal)) { onCell(CellIntent(game.id, index, if (cell.revealed) CellAction.CHORD else if (game.flagMode) CellAction.TOGGLE_FLAG else CellAction.REVEAL, game.flagMode, fromTap = cell.revealed)); true }
+                                customActions = if (!cell.revealed) listOf(CustomAccessibilityAction(if (questionMarks) strings(R.string.cycle_flag_question_mark_clear) else strings(R.string.toggle_flag)) { onCell(CellIntent(game.id, index, CellAction.TOGGLE_FLAG, game.flagMode)); true })
+                                else listOf(CustomAccessibilityAction(strings(R.string.reveal_surrounding_cells)) { onCell(CellIntent(game.id, index, CellAction.CHORD, game.flagMode)); true })
                             }
                         }.testTag("${tagPrefix}cell-$index"))
                 }
@@ -232,7 +236,7 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                 Row(Modifier.padding(horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = {
                         viewport = geometry.transform(1 / 1.3f, 0f, 0f, geometry.width / 2, geometry.height / 2); onViewport(viewport)
-                    }, modifier = Modifier.size(48.dp).semantics { contentDescription = "Zoom out" }) {
+                    }, modifier = Modifier.size(48.dp).semantics { contentDescription = strings(R.string.zoom_out) }) {
                         ZoomGlyph(zoomIn = false)
                     }
                     FilledTonalButton(onClick = {
@@ -245,12 +249,12 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
                             FitBoardGlyph()
                             Spacer(Modifier.width(6.dp))
                         }
-                        Text("Fit board", style = MaterialTheme.typography.labelLarge,
+                        Text(strings(R.string.fit_board), style = MaterialTheme.typography.labelLarge,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     }
                     IconButton(onClick = {
                         viewport = geometry.transform(1.3f, 0f, 0f, geometry.width / 2, geometry.height / 2); onViewport(viewport)
-                    }, modifier = Modifier.size(48.dp).semantics { contentDescription = "Zoom in" }) {
+                    }, modifier = Modifier.size(48.dp).semantics { contentDescription = strings(R.string.zoom_in) }) {
                         ZoomGlyph(zoomIn = true)
                     }
                 }

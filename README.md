@@ -56,7 +56,7 @@ Use a full Git clone (`git fetch --unshallow` for an existing shallow clone). Bo
 
 On Windows, `./scripts/test-versioning.ps1` checks baseline, next-commit, retry, merge, major/minor reset, and shallow-clone behavior using the actual Gradle script in temporary Git repositories.
 
-Open this folder in Android Studio, let Gradle sync, and run `app` on a device or emulator. Install Android SDK Platform 36.1 and Build Tools 35.0.0 through SDK Manager if prompted. Use JDK 17 or newer (Android Studio's bundled JDK works).
+Open this folder in Android Studio, let Gradle sync, and run `app` on a device or emulator. Install Android SDK Platform 36.1 and Build Tools 36.0.0 through SDK Manager if prompted. Use JDK 17 or newer (Android Studio's bundled JDK works). The build uses AGP 9.0.1, Gradle 9.1.0, and AGP's built-in Kotlin support. Release builds enable R8 code optimization and its integrated resource shrinker.
 
 On Windows PowerShell:
 
@@ -78,6 +78,8 @@ The installable debug APK is `app/build/outputs/apk/debug/app-debug.apk`. Versio
 ```
 
 The first command also runs the Compose interaction and layout tests locally with Robolectric 4.17, Android API 35, and native graphics. Test-only dependencies do not ship in the APK. Screenshots are written to `app/build/outputs/screenshots/`.
+
+See [Android build quality](docs/android-build-quality.md) for release optimization, the Play Console edge-to-edge findings, and the device verification checklist. `EdgeToEdgeTest` additionally checks inset handling and app-theme system-bar icons on APIs 30 and 35.
 
 The second command runs the shared interaction tests on a booted emulator or USB-debugging-enabled Android device. Instrumented app tests reset **this app's** local data, so use a test device rather than a saved game you want to retain.
 
