@@ -3,6 +3,7 @@ package com.cbulock.minescape.ui
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
@@ -10,11 +11,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.nativeCanvas
@@ -220,17 +223,66 @@ fun Board(game: Game, onCell: (CellIntent) -> Unit, onViewport: (Viewport) -> Un
             }
             ResultEffects(game, geometry, effectsEnabled)
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            IconButton(onClick = {
-                viewport = geometry.transform(1 / 1.3f, 0f, 0f, geometry.width / 2, geometry.height / 2); onViewport(viewport)
-            }, modifier = Modifier.semantics { contentDescription = "Zoom out" }) { Text("−") }
-            TextButton(onClick = {
-                viewport = Viewport(centerColumn = game.config.columns / 2f, centerRow = game.config.rows / 2f); onViewport(viewport)
-            }, contentPadding = PaddingValues(horizontal = 8.dp)) { Text("Fit board", style = MaterialTheme.typography.labelMedium) }
-            IconButton(onClick = {
-                viewport = geometry.transform(1.3f, 0f, 0f, geometry.width / 2, geometry.height / 2); onViewport(viewport)
-            }, modifier = Modifier.semantics { contentDescription = "Zoom in" }) { Text("+") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.weight(1f, fill = false),
+                shape = RoundedCornerShape(24.dp), color = colors.surfaceContainer,
+                border = BorderStroke(1.dp, colors.outlineVariant.copy(alpha = .65f)),
+            ) {
+                Row(Modifier.padding(horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = {
+                        viewport = geometry.transform(1 / 1.3f, 0f, 0f, geometry.width / 2, geometry.height / 2); onViewport(viewport)
+                    }, modifier = Modifier.size(48.dp).semantics { contentDescription = "Zoom out" }) {
+                        ZoomGlyph(zoomIn = false)
+                    }
+                    FilledTonalButton(onClick = {
+                        viewport = Viewport(centerColumn = game.config.columns / 2f, centerRow = game.config.rows / 2f); onViewport(viewport)
+                    }, modifier = Modifier.weight(1f, fill = false),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(containerColor = colors.primaryContainer, contentColor = colors.onPrimaryContainer),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+                        if (LocalDensity.current.fontScale <= 1.3f) {
+                            FitBoardGlyph()
+                            Spacer(Modifier.width(6.dp))
+                        }
+                        Text("Fit board", style = MaterialTheme.typography.labelLarge,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                    IconButton(onClick = {
+                        viewport = geometry.transform(1.3f, 0f, 0f, geometry.width / 2, geometry.height / 2); onViewport(viewport)
+                    }, modifier = Modifier.size(48.dp).semantics { contentDescription = "Zoom in" }) {
+                        ZoomGlyph(zoomIn = true)
+                    }
+                }
+            }
             controls()
+        }
+    }
+}
+
+@Composable
+private fun ZoomGlyph(zoomIn: Boolean) {
+    val color = MaterialTheme.colorScheme.onSurface
+    Canvas(Modifier.size(20.dp)) {
+        val stroke = 2.dp.toPx()
+        drawLine(color, Offset(size.width * .2f, center.y), Offset(size.width * .8f, center.y), stroke, StrokeCap.Round)
+        if (zoomIn) drawLine(color, Offset(center.x, size.height * .2f), Offset(center.x, size.height * .8f), stroke, StrokeCap.Round)
+    }
+}
+
+@Composable
+private fun FitBoardGlyph() {
+    val color = LocalContentColor.current
+    Canvas(Modifier.size(18.dp)) {
+        val inset = size.width * .15f
+        val arm = size.width * .22f
+        for (x in listOf(inset, size.width - inset)) {
+            for (y in listOf(inset, size.height - inset)) {
+                val dx = if (x < center.x) arm else -arm
+                val dy = if (y < center.y) arm else -arm
+                drawLine(color, Offset(x, y), Offset(x + dx, y), 1.8.dp.toPx(), StrokeCap.Round)
+                drawLine(color, Offset(x, y), Offset(x, y + dy), 1.8.dp.toPx(), StrokeCap.Round)
+            }
         }
     }
 }

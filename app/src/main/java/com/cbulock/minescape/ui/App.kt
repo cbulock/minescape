@@ -257,7 +257,12 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
             } else {
                 Counter("Mines", (game.config.mines - game.flags).toString(), Modifier.weight(1f).semantics { contentDescription = "Estimated mines remaining" })
                 Spacer(Modifier.width(8.dp))
-                Counter("Time", formatTime(game.elapsedMillis), Modifier.weight(1f).testTag("timer"))
+                Box(Modifier.weight(1f)) {
+                    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+                        Counter("Time", formatTime(game.elapsedMillis),
+                            Modifier.testTag("timer").padding(horizontal = 10.dp, vertical = 2.dp))
+                    }
+                }
                 if (largeText) {
                     FilledTonalIconButton(onClick = onNew, modifier = Modifier.semantics { contentDescription = "New game" }) { Text("+", fontSize = 24.sp) }
                 } else {
