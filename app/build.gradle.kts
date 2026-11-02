@@ -4,6 +4,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    testLogging { events("started", "failed", "skipped") }
+}
+
 apply(from = rootProject.file("gradle/versioning.gradle.kts"))
 
 android {

@@ -31,7 +31,7 @@ class ChallengeFeaturesTest {
             repository = GameRepository(it); model = ViewModelProvider(it)[GameViewModel::class.java]
             runBlocking { repository.update { data } }
         }
-        waitFor { model.data.value?.game?.id == data.game?.id }
+        waitFor { model.data.value?.game?.id == data.game?.id && saved().game?.id == data.game?.id }
     }
     private fun menu(label: String) {
         compose.onNodeWithContentDescription("Open menu").performClick()
@@ -83,11 +83,12 @@ class ChallengeFeaturesTest {
             compose.onNodeWithText("Show answer").assertIsDisplayed()
             compose.onNodeWithText("Reveal square").assertDoesNotExist()
             compose.onNodeWithText("Flag square").assertDoesNotExist()
+            waitFor { saved().game?.id == game.id }
             assertEquals(game.cells, saved().game!!.cells)
             compose.onNodeWithText("Show answer").performClick()
             val target = requireNotNull(model.hint.value)
             compose.onNodeWithText(if (target.mine) "Flag square" else "Reveal square").performClick()
-            waitFor { saved().game?.cells != game.cells }
+            waitFor { saved().game?.id == game.id && saved().game?.cells != game.cells }
             assertEquals(1, saved().game!!.hintsUsed)
         }
     }
