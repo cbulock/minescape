@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.cbulock.minescape.R
 import com.cbulock.minescape.data.*
 import com.cbulock.minescape.game.*
 import java.time.Instant
@@ -28,6 +29,7 @@ import java.time.format.FormatStyle
 
 @Composable
 internal fun StatisticsScreen(data: AppData, onClose: () -> Unit) {
+    val strings = textResources()
     var generation by rememberSaveable { mutableStateOf(GenerationMode.CLASSIC) }
     var difficulty by rememberSaveable { mutableStateOf<Difficulty?>(null) }
     var choosingDifficulty by remember { mutableStateOf(false) }
@@ -43,15 +45,15 @@ internal fun StatisticsScreen(data: AppData, onClose: () -> Unit) {
     val results = remember(data.results, generation, difficulty) {
         data.results.asReversed().filter { it.generation == generation && (difficulty == null || it.config.difficulty == difficulty) }
     }
-    val modeName = if (generation == GenerationMode.CLASSIC) "Classic" else "No-guess"
+    val modeName = if (generation == GenerationMode.CLASSIC) strings(R.string.classic) else strings(R.string.no_guess)
 
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Box(Modifier.safeDrawingPadding(), contentAlignment = Alignment.TopCenter) {
                 Column(Modifier.widthIn(max = 640.dp).fillMaxWidth()) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Statistics", Modifier.weight(1f).semantics { heading() }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        TextButton(onClick = onClose) { Text("Done") }
+                        Text(strings(R.string.statistics), Modifier.weight(1f).semantics { heading() }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        TextButton(onClick = onClose) { Text(strings(R.string.done)) }
                     }
                     LazyColumn(state = listState, modifier = Modifier.weight(1f).testTag("statistics-list"),
                         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
@@ -64,19 +66,19 @@ internal fun StatisticsScreen(data: AppData, onClose: () -> Unit) {
                                             onClick = {
                                                 generation = mode
                                                 if (mode == GenerationMode.NO_GUESS && difficulty == Difficulty.CUSTOM) difficulty = null
-                                            }, label = { Text(if (mode == GenerationMode.CLASSIC) "Classic" else "No-guess") })
+                                            }, label = { Text(if (mode == GenerationMode.CLASSIC) strings(R.string.classic) else strings(R.string.no_guess)) })
                                     }
                                 }
                                 Box {
                                     OutlinedButton(onClick = { choosingDifficulty = true }, modifier = Modifier.fillMaxWidth()
-                                        .semantics { contentDescription = "Difficulty filter: ${difficulty?.title ?: "All difficulties"}" },
+                                        .semantics { contentDescription = strings(R.string.difficulty_filter, difficulty?.let(strings::difficulty) ?: strings(R.string.all_difficulties)) },
                                         shape = RoundedCornerShape(14.dp)) {
-                                        Text(difficulty?.title ?: "All difficulties", Modifier.weight(1f))
+                                        Text(difficulty?.let(strings::difficulty) ?: strings(R.string.all_difficulties), Modifier.weight(1f))
                                         Text("⌄", Modifier.padding(start = 8.dp))
                                     }
                                     DropdownMenu(expanded = choosingDifficulty, onDismissRequest = { choosingDifficulty = false }) {
                                         (listOf<Difficulty?>(null) + difficulties).forEach { value ->
-                                            DropdownMenuItem(text = { Text(value?.title ?: "All difficulties") }, onClick = {
+                                            DropdownMenuItem(text = { Text(value?.let(strings::difficulty) ?: strings(R.string.all_difficulties)) }, onClick = {
                                                 difficulty = value
                                                 choosingDifficulty = false
                                             })
@@ -86,23 +88,23 @@ internal fun StatisticsScreen(data: AppData, onClose: () -> Unit) {
                             }
                         }
                         item(key = "overview") {
-                            StatisticsOverview(wins, losses, "$modeName · ${difficulty?.title ?: "All difficulties"}")
+                            StatisticsOverview(wins, losses, strings(R.string.formatted_value, modeName, difficulty?.let(strings::difficulty) ?: strings(R.string.all_difficulties)))
                         }
                         if (wins + losses > 0) {
-                            item(key = "records-title") { StatisticsHeading(if (difficulty == null) "By difficulty" else "Your records") }
+                            item(key = "records-title") { StatisticsHeading(if (difficulty == null) strings(R.string.by_difficulty) else strings(R.string.your_records)) }
                             items(selected, key = { "difficulty-${it.name}" }) { value ->
                                 DifficultyStatistics(value, statistics[value] ?: Statistics())
                             }
                         }
                         item(key = "history-title") {
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                StatisticsHeading("Recent results")
-                                Text("Newest first · From your last 100 games", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                StatisticsHeading(strings(R.string.recent_results))
+                                Text(strings(R.string.newest_first_from_your_last_100_games), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         if (results.isEmpty()) {
                             item(key = "history-empty") {
-                                Text(if (wins + losses == 0L) "Finished games will appear here." else "No recent games match this filter. Your all-time records are shown above.",
+                                Text(if (wins + losses == 0L) strings(R.string.finished_games_will_appear_here) else strings(R.string.no_recent_games_match_this_filter_your_all_time),
                                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -110,17 +112,17 @@ internal fun StatisticsScreen(data: AppData, onClose: () -> Unit) {
                         if (results.size > visibleResults) {
                             item(key = "more") {
                                 OutlinedButton(onClick = { visibleResults += 10 }, modifier = Modifier.fillMaxWidth()) {
-                                    Text("Show more results (${results.size - visibleResults} remaining)")
+                                    Text(strings(R.string.show_more_results_remaining, results.size - visibleResults))
                                 }
                             }
                         }
                         item(key = "rules") {
                             Column {
                                 TextButton(onClick = { showCountingRules = !showCountingRules }) {
-                                    Text(if (showCountingRules) "Hide counting details" else "What counts toward statistics?")
+                                    Text(if (showCountingRules) strings(R.string.hide_counting_details) else strings(R.string.what_counts_toward_statistics))
                                 }
                                 if (showCountingRules) Text(
-                                    "Only finished standard games count. Practice is excluded; daily challenges have their own history. Unfinished boards do not count as losses.\n\nCustom boards share totals, but have no combined best time. Streaks count consecutive wins within each difficulty and mode; older games from before streak tracking are not included.",
+                                    strings(R.string.only_finished_standard_games_count_practice_is_excluded_daily),
                                     Modifier.padding(horizontal = 12.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -134,22 +136,23 @@ internal fun StatisticsScreen(data: AppData, onClose: () -> Unit) {
 
 @Composable
 private fun StatisticsOverview(wins: Long, losses: Long, scope: String) {
+    val strings = textResources()
     val games = wins + losses
     Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(scope, style = MaterialTheme.typography.labelLarge)
             if (games == 0L) {
-                Text("A fresh start", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                Text("Finish a game in this mode and difficulty to start building your records.", style = MaterialTheme.typography.bodyMedium)
+                Text(strings(R.string.a_fresh_start), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(strings(R.string.finish_a_game_in_this_mode_and_difficulty_to), style = MaterialTheme.typography.bodyMedium)
             } else {
                 Column {
-                    Text("%.1f%%".format(wins * 100.0 / games), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
-                    Text("All-time win rate", style = MaterialTheme.typography.bodyMedium)
+                    Text(strings.format("%.1f%%", wins * 100.0 / games), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+                    Text(strings(R.string.all_time_win_rate), style = MaterialTheme.typography.bodyMedium)
                 }
                 LinearProgressIndicator(progress = { (wins.toFloat() / games).coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth().height(8.dp), trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .12f))
-                StatisticsMetrics(listOf("Played" to "$games", "Won" to "$wins", "Lost" to "$losses"))
+                StatisticsMetrics(listOf(strings(R.string.played) to strings.format("%d", games), strings(R.string.won) to strings.format("%d", wins), strings(R.string.lost) to strings.format("%d", losses)))
             }
         }
     }
@@ -157,23 +160,24 @@ private fun StatisticsOverview(wins: Long, losses: Long, scope: String) {
 
 @Composable
 private fun DifficultyStatistics(difficulty: Difficulty, stats: Statistics) {
+    val strings = textResources()
     Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(difficulty.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(if (stats.wins + stats.losses == 0) "No finished games yet" else
-                    "${stats.wins} won · ${stats.losses} lost · ${"%.1f%%".format(stats.winPercent)} wins",
+                Text(strings.difficulty(difficulty), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(if (stats.wins + stats.losses == 0) strings(R.string.no_finished_games_yet) else
+                    strings(R.string.won_lost_wins, stats.wins, stats.losses, strings.format("%.1f%%", stats.winPercent)),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (stats.wins + stats.losses > 0) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f))
                 val metrics = buildList {
-                    if (difficulty != Difficulty.CUSTOM) add("Best time" to (stats.bestMillis?.let(::formatTime) ?: "—"))
-                    add("Current streak" to "${stats.currentStreak}")
-                    add("Best streak" to "${stats.bestStreak}")
+                    if (difficulty != Difficulty.CUSTOM) add(strings(R.string.best_time) to (stats.bestMillis?.let(strings::time) ?: "—"))
+                    add(strings(R.string.current_streak) to strings.format("%d", stats.currentStreak))
+                    add(strings(R.string.best_streak) to strings.format("%d", stats.bestStreak))
                 }
                 StatisticsMetrics(metrics)
-                if (difficulty == Difficulty.CUSTOM) Text("All custom board sizes combined", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (difficulty == Difficulty.CUSTOM) Text(strings(R.string.all_custom_board_sizes_combined), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -207,22 +211,23 @@ private fun StatisticsHeading(text: String) {
 
 @Composable
 private fun RecentResult(result: GameResult) {
+    val strings = textResources()
     val colors = MaterialTheme.colorScheme
-    val date = remember(result.finishedAt) {
-        runCatching { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).format(Instant.parse(result.finishedAt).atZone(ZoneId.systemDefault())) }
+    val date = remember(result.finishedAt, strings.locale, ZoneId.systemDefault()) {
+        runCatching { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(strings.locale).format(Instant.parse(result.finishedAt).atZone(ZoneId.systemDefault())) }
             .getOrDefault(result.finishedAt.take(10))
     }
     Surface(shape = RoundedCornerShape(16.dp), color = colors.surfaceContainer) {
         Column(Modifier.fillMaxWidth().padding(16.dp).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()) {
-                Text(if (result.won) "Won" else "Lost", color = if (result.won) colors.secondary else colors.tertiary,
+                Text(if (result.won) strings(R.string.won) else strings(R.string.lost), color = if (result.won) colors.secondary else colors.tertiary,
                     style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                Text(result.config.difficulty.title, style = MaterialTheme.typography.labelLarge)
-                Text(formatTime(result.elapsedMillis), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(strings.difficulty(result.config.difficulty), style = MaterialTheme.typography.labelLarge)
+                Text(strings.time(result.elapsedMillis), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
             }
             Text(date, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
-            if (result.newBest) Text("Personal best when played", style = MaterialTheme.typography.labelMedium, color = colors.primary)
+            if (result.newBest) Text(strings(R.string.personal_best_when_played), style = MaterialTheme.typography.labelMedium, color = colors.primary)
         }
     }
 }

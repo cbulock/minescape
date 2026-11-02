@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.cbulock.minescape.R
 import com.cbulock.minescape.data.DailyRecord
 import com.cbulock.minescape.data.GameResult
 import com.cbulock.minescape.game.*
@@ -65,6 +66,7 @@ internal fun ResultDetailsDialog(
     onRetry: () -> Unit,
     onUndo: () -> Unit,
 ) {
+    val strings = textResources()
     val won = game.status == GameStatus.WON
     val colors = MaterialTheme.colorScheme
     val accent = if (won) colors.secondary else colors.tertiary
@@ -78,65 +80,65 @@ internal fun ResultDetailsDialog(
             shape = RoundedCornerShape(28.dp), color = colors.surfaceContainer) {
             Column(Modifier.padding(20.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onClose, modifier = Modifier.semantics { contentDescription = "Close result and view board" }) { Text("View board") }
+                    TextButton(onClick = onClose, modifier = Modifier.semantics { contentDescription = strings(R.string.close_result_and_view_board) }) { Text(strings(R.string.view_board)) }
                 }
                 Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Surface(color = container, contentColor = onContainer, shape = RoundedCornerShape(22.dp)) {
                         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             if (!largeText) ResultEmblem(won, accent)
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(if (won) "You won" else "Game over", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                                Text(if (won) "Every safe square, found." else "A mine got this one.", style = MaterialTheme.typography.bodyMedium)
+                                Text(if (won) strings(R.string.you_won) else strings(R.string.game_over), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                                Text(if (won) strings(R.string.every_safe_square_found) else strings(R.string.a_mine_got_this_one), style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        ResultBadge(game.config.difficulty.title)
-                        ResultBadge(if (game.generation == GenerationMode.NO_GUESS) "No-guess" else "Classic")
-                        if (game.mode != PlayMode.NORMAL) ResultBadge(if (game.mode == PlayMode.PRACTICE) "Practice" else "Daily")
+                        ResultBadge(strings.difficulty(game.config.difficulty))
+                        ResultBadge(if (game.generation == GenerationMode.NO_GUESS) strings(R.string.no_guess) else strings(R.string.classic))
+                        if (game.mode != PlayMode.NORMAL) ResultBadge(if (game.mode == PlayMode.PRACTICE) strings(R.string.practice) else strings(R.string.daily_2))
                     }
-                    Text("${game.config.columns} × ${game.config.rows} board · ${game.config.mines} mines" +
-                        (game.dailyDate?.let { "\nDaily · $it" } ?: ""), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Text(strings.quantity(R.plurals.result_board_summary, game.config.mines, game.config.columns, game.config.rows, game.config.mines) +
+                        (game.dailyDate?.let { strings(R.string.daily_3, it) } ?: ""), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                     if (largeText) {
-                        ResultStat("Time", formatTime(game.elapsedMillis), Modifier.fillMaxWidth())
-                        ResultStat("Safe squares", "${game.cleared} / $safeSquares", Modifier.fillMaxWidth())
+                        ResultStat(strings(R.string.time), strings.time(game.elapsedMillis), Modifier.fillMaxWidth())
+                        ResultStat(strings(R.string.safe_squares), strings(R.string.formatted_value_3, game.cleared, safeSquares), Modifier.fillMaxWidth())
                     } else Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ResultStat("Time", formatTime(game.elapsedMillis), Modifier.weight(1f))
-                        ResultStat("Safe squares", "${game.cleared} / $safeSquares", Modifier.weight(1f))
+                        ResultStat(strings(R.string.time), strings.time(game.elapsedMillis), Modifier.weight(1f))
+                        ResultStat(strings(R.string.safe_squares), strings(R.string.formatted_value_3, game.cleared, safeSquares), Modifier.weight(1f))
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("${(progress * 100).toInt()}% cleared", style = MaterialTheme.typography.labelMedium, color = accent)
+                        Text(strings(R.string.cleared, (progress * 100).toInt()), style = MaterialTheme.typography.labelMedium, color = accent)
                         LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().height(8.dp), color = accent, trackColor = container)
                     }
                     if (result?.newBest == true || result?.previousBestMillis != null) {
                         Surface(color = colors.primaryContainer, contentColor = colors.onPrimaryContainer, shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                if (result.newBest) Text("New personal best", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                                Text(result.previousBestMillis?.let { "Previous best ${formatTime(it)}" } ?: "Your first recorded win at this difficulty and mode.", style = MaterialTheme.typography.bodyMedium)
+                                if (result.newBest) Text(strings(R.string.new_personal_best), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                                Text(result.previousBestMillis?.let { strings(R.string.previous_best, strings.time(it)) } ?: strings(R.string.your_first_recorded_win_at_this_difficulty_and_mode), style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
                     if (game.mode == PlayMode.PRACTICE) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            ResultBadge("${game.hintsUsed} ${if (game.hintsUsed == 1) "hint" else "hints"}")
-                            ResultBadge("${game.undosUsed} ${if (game.undosUsed == 1) "undo" else "undos"}")
-                            ResultBadge("${game.minesHit} ${if (game.minesHit == 1) "mine hit" else "mines hit"}")
+                            ResultBadge(strings.quantity(R.plurals.hints_used, game.hintsUsed, game.hintsUsed))
+                            ResultBadge(strings.quantity(R.plurals.undos_used, game.undosUsed, game.undosUsed))
+                            ResultBadge(strings.quantity(R.plurals.mines_hit, game.minesHit, game.minesHit))
                         }
-                        Text("Practice does not affect records.", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                        Text(strings(R.string.practice_does_not_affect_records), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = onReplay, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
-                            Text(if (game.dailyDate != null) "Practice again" else "Play another ${game.config.difficulty.title} game")
+                            Text(if (game.dailyDate != null) strings(R.string.practice_again) else strings(R.string.play_another_game, strings.difficulty(game.config.difficulty)))
                         }
                         if (game.mode == PlayMode.PRACTICE) {
-                            OutlinedButton(onClick = onUndo, enabled = game.undo.isNotEmpty(), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) { Text("Undo") }
+                            OutlinedButton(onClick = onUndo, enabled = game.undo.isNotEmpty(), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) { Text(strings(R.string.undo)) }
                         }
                         if (game.dailyDate == null) {
                             OutlinedButton(onClick = onRetry, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
-                                Text("Retry same board in practice")
+                                Text(strings(R.string.retry_same_board_in_practice))
                             }
-                            Text(if (game.openingCells.isEmpty()) "Same mines, a safe opening. Clock and markers reset; records stay unchanged."
-                                else "Same mines and opening. Clock and markers reset; records stay unchanged.",
+                            Text(if (game.openingCells.isEmpty()) strings(R.string.same_mines_a_safe_opening_clock_and_markers_reset)
+                                else strings(R.string.same_mines_and_opening_clock_and_markers_reset_records),
                                 style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                         }
                     }
@@ -151,16 +153,17 @@ internal fun ResultDetailsDialog(
 /** Keep the next steps available while result details or the board are being inspected. */
 @Composable
 internal fun FinishedGameActions(official: DailyRecord?, onNew: () -> Unit, modifier: Modifier = Modifier, horizontal: Boolean = false) {
+    val strings = textResources()
     FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = if (horizontal) 2 else 1) {
         if (official != null) {
             ShareResultButton(official, Modifier.weight(1f).heightIn(min = 48.dp), prominent = true)
             OutlinedButton(onClick = onNew, modifier = Modifier.weight(1f).heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
-                Text("New game")
+                Text(strings(R.string.new_game))
             }
         } else {
             Button(onClick = onNew, modifier = Modifier.weight(1f).heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) {
-                Text("New game")
+                Text(strings(R.string.new_game))
             }
         }
     }

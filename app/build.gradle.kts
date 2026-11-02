@@ -26,9 +26,11 @@ android {
     testOptions { unitTests.isIncludeAndroidResources = true }
     sourceSets.getByName("test").kotlin.directories += "src/androidTest/java"
     buildTypes {
+        debug { isPseudoLocalesEnabled = true }
         release {
             // AGP 9 enables optimized resource shrinking alongside these release optimizations.
             isMinifyEnabled = true
+            // AGP 9 integrates resource shrinking with R8's code optimization.
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }

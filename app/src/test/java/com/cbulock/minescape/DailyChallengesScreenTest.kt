@@ -49,7 +49,7 @@ class DailyChallengesScreenTest {
         compose.onNodeWithTag("daily-list").performScrollToKey("2026-09-24")
         capture("daily-history")
         compose.onAllNodesWithText("Share result")[0].performClick()
-        compose.waitUntil(10000) { compose.onAllNodesWithText("Share image").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(10000) { compose.onAllNodesWithText("Share results").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Close").performClick()
         compose.onAllNodesWithText("Practice")[0].performClick()
         assertEquals("2026-09-24", selected)

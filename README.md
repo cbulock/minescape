@@ -62,7 +62,7 @@ On Windows, `./scripts/test-versioning.ps1` checks baseline, next-commit, retry,
 
 Open this folder in Android Studio, let Gradle sync, and run `app` on a device or emulator. Install Android SDK Platform 36.1 and Build Tools 36.0.0 through SDK Manager if prompted. Use JDK 17 or newer (Android Studio's bundled JDK works). The project uses Android Gradle Plugin 9.0.1, Gradle 9.1.0, and built-in Kotlin support.
 
-Release builds enable code and resource shrinking; AGP 9 also enables optimized resource shrinking by default. Validate changes to the build toolchain with `testDebugUnitTest lintRelease bundleRelease` so checks exercise the same optimized bundle used for Google Play.
+Release builds enable R8 code optimization and AGP 9's integrated, optimized resource shrinking. Validate changes to the build toolchain with `testDebugUnitTest lintRelease bundleRelease` so checks exercise the same optimized bundle used for Google Play.
 
 On Windows PowerShell:
 
@@ -84,6 +84,8 @@ The installable debug APK is `app/build/outputs/apk/debug/app-debug.apk`. Versio
 ```
 
 The first command also runs the Compose interaction and layout tests locally with Robolectric 4.17, Android API 35, and native graphics. Test-only dependencies do not ship in the APK. Screenshots are written to `app/build/outputs/screenshots/`.
+
+See [Android build quality](docs/android-build-quality.md) for release optimization, the Play Console edge-to-edge findings, and the device verification checklist. `EdgeToEdgeTest` additionally checks inset handling and app-theme system-bar icons on APIs 30 and 35.
 
 The second command runs the shared interaction tests on a booted emulator or USB-debugging-enabled Android device. Instrumented app tests reset **this app's** local data, so use a test device rather than a saved game you want to retain.
 

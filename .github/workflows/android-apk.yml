@@ -44,8 +44,8 @@ jobs:
           mkdir -p "$HOME/.android"
           printf '%s' "$KEYSTORE" | base64 --decode > "$HOME/.android/debug.keystore"
           chmod 600 "$HOME/.android/debug.keystore"
-      - name: Test, lint, and build APK
-        run: bash ./gradlew --no-daemon :app:printAppVersion testDebugUnitTest lintDebug assembleDebug
+      - name: Test, lint, and build debug and optimized release APKs
+        run: bash ./gradlew --no-daemon :app:printAppVersion testDebugUnitTest lintDebug lintRelease assembleDebug assembleRelease
       - name: Test Play publishing safeguards
         run: python3 -m unittest discover -s scripts -p test_publish_play.py
       - name: Sign published APK with stable key

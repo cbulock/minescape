@@ -2,6 +2,10 @@ package com.cbulock.minescape
 
 import android.content.Intent
 import android.content.Context
+import android.content.ClipboardManager
+import android.content.ClipData
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.net.Uri
 import android.graphics.BitmapFactory
 import androidx.core.content.FileProvider
@@ -32,13 +36,18 @@ import java.util.TimeZone
 @RunWith(RobolectricTestRunner::class)
 @Config(shadows = [WindowsShareProviderShadow::class])
 class DailyShareTest {
+    private fun resources(locale: Locale = Locale.getDefault()): Resources {
+        val app = ApplicationProvider.getApplicationContext<MinescapeApplication>()
+        return app.createConfigurationContext(Configuration(app.resources.configuration).apply { setLocale(locale) }).resources
+    }
+
     @get:Rule val compose = createEmptyComposeRule()
     @Test fun shareCardHasReadableImageAndNarrowGrantedUriWithNoSpoilers() {
         val context = ApplicationProvider.getApplicationContext<MinescapeApplication>()
         val record = DailyRecord("2026-10-09", DailyOutcome.WON, 87000)
         val intent = DailyShare.intent(context, record)
         assertEquals(Intent.ACTION_SEND, intent.action); assertEquals("image/png", intent.type)
-        assertEquals(DailyShare.text(record, context.resources.configuration.locales[0]), intent.getStringExtra(Intent.EXTRA_TEXT))
+        assertEquals(DailyShare.text(record, context.resources), intent.getStringExtra(Intent.EXTRA_TEXT))
         assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION, intent.flags)
         val uri = intent.clipData!!.getItemAt(0).uri
         assertEquals("content", uri.scheme)
@@ -50,7 +59,7 @@ class DailyShareTest {
         assertEquals(1080, bitmap.width); assertEquals(720, bitmap.height); bitmap.recycle()
         val output = File("build/outputs/screenshots/daily-share-card.png").apply { parentFile!!.mkdirs() }
         file.copyTo(output, overwrite = true)
-        assertThrows(IllegalArgumentException::class.java) { DailyShare.text(record.copy(outcome = DailyOutcome.IN_PROGRESS)) }
+        assertThrows(IllegalArgumentException::class.java) { DailyShare.text(record.copy(outcome = DailyOutcome.IN_PROGRESS), resources()) }
     }
     @Test fun localizedDatesKeepThePuzzleDayAcrossTimeZones() {
         val record = DailyRecord("2026-10-09", DailyOutcome.WON, 87000)
@@ -59,9 +68,9 @@ class DailyShareTest {
             for (zone in listOf("Pacific/Kiritimati", "America/Los_Angeles")) {
                 TimeZone.setDefault(TimeZone.getTimeZone(zone))
                 assertEquals("Minescape Daily · Oct 9, 2026\nWon · 01:27\nFirst attempt · Intermediate · No-guess\n\nPlay this puzzle:\nhttps://cbulock.github.io/minescape/play/#d1.2026-10-09\n\nGet Minescape on Google Play:\nhttps://play.google.com/store/apps/details?id=com.cbulock.minescape",
-                    DailyShare.text(record, Locale.US))
-                assertTrue(DailyShare.text(record, Locale.GERMANY).startsWith("Minescape Daily · 09.10.2026\n"))
-                assertFalse(DailyShare.text(record, Locale.JAPAN).contains("UTC"))
+                    DailyShare.text(record, resources(Locale.US)))
+                assertTrue(DailyShare.text(record, resources(Locale.GERMANY)).startsWith("Minescape Daily · 09.10.2026\n"))
+                assertFalse(DailyShare.text(record, resources(Locale.JAPAN)).contains("UTC"))
             }
         } finally { TimeZone.setDefault(originalZone) }
     }
@@ -69,7 +78,7 @@ class DailyShareTest {
     @Test fun playStoreLinkIsIncludedForBothOutcomesAndAllLocales() {
         for (outcome in listOf(DailyOutcome.WON, DailyOutcome.LOST)) {
             for (locale in listOf(Locale.US, Locale.GERMANY, Locale.JAPAN)) {
-                val text = DailyShare.text(DailyRecord("2026-10-09", outcome, 87000), locale)
+                val text = DailyShare.text(DailyRecord("2026-10-09", outcome, 87000), resources(locale))
                 assertTrue(text.endsWith("\n\nGet Minescape on Google Play:\nhttps://play.google.com/store/apps/details?id=com.cbulock.minescape"))
             }
         }
@@ -79,10 +88,14 @@ class DailyShareTest {
     @Test fun renderOutcomeAndLocalePreviews() {
         for ((name, outcome, locale) in listOf(
             Triple("won", DailyOutcome.WON, Locale.US),
-            Triple("lost", DailyOutcome.LOST, Locale.GERMANY),
+            Triple("lost", DailyOutcome.LOST, Locale.US),
+            Triple("french-won", DailyOutcome.WON, Locale.FRANCE),
+            Triple("french-lost", DailyOutcome.LOST, Locale.FRANCE),
+            Triple("spanish-lost", DailyOutcome.LOST, Locale.forLanguageTag("es")),
+            Triple("portuguese-won", DailyOutcome.WON, Locale.forLanguageTag("pt-BR")),
             Triple("japanese", DailyOutcome.WON, Locale.JAPAN),
         )) {
-            val bitmap = DailyShare.card(DailyRecord("2026-10-09", outcome, 87000), locale)
+            val bitmap = DailyShare.card(DailyRecord("2026-10-09", outcome, 87000), resources(locale))
             try {
                 val file = File("build/outputs/screenshots/daily-share-$name.png").apply { parentFile!!.mkdirs() }
                 file.outputStream().use { assertTrue(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)) }
@@ -103,7 +116,10 @@ class DailyShareTest {
         val data = AppData(dailyGame = finished, activeSlot = ActiveSlot.DAILY,
             dailyRecords = mapOf("2026-10-09" to DailyRecord("2026-10-09", DailyOutcome.IN_PROGRESS))).recordResult()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { runBlocking { GameRepository(it).update { data } } }
+            scenario.onActivity {
+                runBlocking { GameRepository(it).update { data } }
+                it.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Existing text", "Keep until sharing"))
+            }
             compose.waitUntil(10000) { compose.waitForIdle(); compose.onAllNodesWithTag("game-result").fetchSemanticsNodes().isNotEmpty() }
             val shareLabel = if (history) "Share result" else "Share daily result"
             if (history) {
@@ -124,7 +140,12 @@ class DailyShareTest {
             shareButton.assertIsDisplayed().performClick()
             compose.waitUntil(10000) {
                 compose.waitForIdle()
-                compose.onAllNodesWithContentDescription(DailyShare.text(data.dailyRecords["2026-10-09"]!!)).fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodesWithContentDescription(DailyShare.text(data.dailyRecords["2026-10-09"]!!, resources())).fetchSemanticsNodes().isNotEmpty()
+            }
+            compose.onNodeWithText("Copy text").assertDoesNotExist()
+            compose.onNodeWithText("Share text").assertDoesNotExist()
+            scenario.onActivity {
+                assertEquals("Keep until sharing", it.getSystemService(ClipboardManager::class.java).primaryClip!!.getItemAt(0).text.toString())
             }
             if (won && !history) scenario.onActivity {
                 val view = android.view.inspector.WindowInspector.getGlobalWindowViews().last { it.isShown && it.width > 0 }
@@ -134,7 +155,7 @@ class DailyShareTest {
                     .outputStream().use { capture.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
                 capture.recycle()
             }
-            compose.onNodeWithText("Share image").assertIsEnabled().performClick()
+            compose.onNodeWithText("Share results").assertIsDisplayed().assertIsEnabled().performClick()
             var chooser: Intent? = null
             compose.waitUntil(10000) {
                 compose.waitForIdle()
@@ -144,7 +165,13 @@ class DailyShareTest {
             }
             assertEquals(Intent.ACTION_CHOOSER, chooser!!.action)
             val send = chooser!!.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!
-            assertEquals(DailyShare.text(data.dailyRecords["2026-10-09"]!!), send.getStringExtra(Intent.EXTRA_TEXT))
+            assertEquals(DailyShare.text(data.dailyRecords["2026-10-09"]!!, resources()), send.getStringExtra(Intent.EXTRA_TEXT))
+            assertEquals("image/png", send.type)
+            assertTrue(send.hasExtra(Intent.EXTRA_STREAM))
+            scenario.onActivity {
+                val clipboard = it.getSystemService(ClipboardManager::class.java)
+                assertEquals("Keep until sharing", clipboard.primaryClip!!.getItemAt(0).text.toString())
+            }
             compose.onNodeWithText("Close").performClick()
             if (history) compose.onNodeWithText("Done").performClick()
             else {

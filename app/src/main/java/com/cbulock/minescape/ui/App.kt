@@ -42,6 +42,7 @@ import com.cbulock.minescape.game.*
 
 @Composable
 fun MinescapeApp(model: GameViewModel) {
+    val strings = textResources()
     val data by model.data.collectAsStateWithLifecycle()
     val error by model.error.collectAsStateWithLifecycle()
     val busy by model.busy.collectAsStateWithLifecycle()
@@ -122,18 +123,18 @@ fun MinescapeApp(model: GameViewModel) {
     }
     val menu: @Composable () -> Unit = {
         Box {
-            IconButton(onClick = { model.dismissHint(); menuOpen = true }, modifier = Modifier.semantics { contentDescription = "Open menu" }) { Text("•••", fontWeight = FontWeight.Bold) }
+            IconButton(onClick = { model.dismissHint(); menuOpen = true }, modifier = Modifier.semantics { contentDescription = strings(R.string.open_menu) }) { Text("•••", fontWeight = FontWeight.Bold) }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(text = { Text("Open shared board") }, onClick = { menuOpen = false; pasteChallenge = true; model.dismissHint() })
+                DropdownMenuItem(text = { Text(strings(R.string.open_shared_board)) }, onClick = { menuOpen = false; pasteChallenge = true; model.dismissHint() })
                 if (data?.activeGame?.status != null && data?.activeGame?.status != GameStatus.READY)
-                    DropdownMenuItem(text = { Text("Share this board") }, onClick = { menuOpen = false; shareChallenge = true; model.dismissHint() })
-                listOf("New game" to "new", "Statistics" to "stats", "Settings" to "settings", "How to play" to "help", "Daily challenges" to "daily").forEach { (label, destination) ->
+                    DropdownMenuItem(text = { Text(strings(R.string.share_this_board)) }, onClick = { menuOpen = false; shareChallenge = true; model.dismissHint() })
+                listOf(strings(R.string.new_game) to "new", strings(R.string.statistics) to "stats", strings(R.string.settings) to "settings", strings(R.string.how_to_play) to "help", strings(R.string.daily_challenges) to "daily").forEach { (label, destination) ->
                     DropdownMenuItem(text = { Text(label) }, onClick = { menuOpen = false; openPage(destination) })
                 }
                 if (data?.game != null && data?.activeSlot == ActiveSlot.DAILY)
-                    DropdownMenuItem(text = { Text("Resume regular game") }, onClick = { menuOpen = false; model.switchSlot(ActiveSlot.REGULAR); showGame() })
+                    DropdownMenuItem(text = { Text(strings(R.string.resume_regular_game)) }, onClick = { menuOpen = false; model.switchSlot(ActiveSlot.REGULAR); showGame() })
                 if (data?.dailyGame?.finished == false && data?.activeSlot == ActiveSlot.REGULAR)
-                    DropdownMenuItem(text = { Text("Resume daily challenge") }, onClick = { menuOpen = false; model.switchSlot(ActiveSlot.DAILY); showGame() })
+                    DropdownMenuItem(text = { Text(strings(R.string.resume_daily_challenge)) }, onClick = { menuOpen = false; model.switchSlot(ActiveSlot.DAILY); showGame() })
             }
         }
     }
@@ -155,7 +156,7 @@ fun MinescapeApp(model: GameViewModel) {
                     menu()
                 }
             }
-            error?.let { TextButton(onClick = model::dismissError) { Text(it, color = MaterialTheme.colorScheme.error) } }
+            error?.let { TextButton(onClick = model::dismissError) { Text(strings.message(it), color = MaterialTheme.colorScheme.error) } }
             val loaded = data
             val resultPresentation = loaded?.activeGame?.let { rememberResultPresentation(it, resumed && !paused) }
             if (loaded == null) {
@@ -191,58 +192,60 @@ fun MinescapeApp(model: GameViewModel) {
                 onExport = { pickerOpen = true; exporter.launch("minescape-${model.today()}.json") },
                 onImport = { pickerOpen = true; importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) })
         }
-        "help" -> InfoDialog("How to play", ::closePage) {
-            Button(onClick = { openPage("tutorial") }, modifier = Modifier.fillMaxWidth()) { Text("Learn with a guided board") }
-            Text("Reveal every safe square to win. A number tells you how many mines touch that square, including diagonally.")
-            Text("Tap to reveal. Hold a covered square to flag it, or turn on Flag mode to place flags with taps. Tap a flag in Flag mode, or hold it, to remove it.")
-            Text("Tap a revealed number when you have placed the matching number of flags around it to open its other neighbors. Incorrect flags can uncover a mine!")
-            Text("A hold flags once and never reveals. Moving into another cell cancels the move. When squares are too small to tap reliably, your first touch zooms in; lift and touch again to play.")
-            Text("Pinch to zoom and drag to explore. Fit board shows the entire field. Your first reveal always opens a safe area; later moves may require a guess.")
-            Text("No-guess preset boards are verified solvable by deduction. Practice offers hints and undo, without changing normal records. Daily challenges use a fixed opening and count only the first attempt.")
-            Text("Your game saves automatically. The clock pauses while menus are open or the app is in the background.")
-            Text("Optional question marks are available in Settings. They mark uncertainty and never count toward a chord. Finished regular boards can be retried in practice with the same mine layout.")
+        "help" -> InfoDialog(strings(R.string.how_to_play), ::closePage) {
+            Button(onClick = { openPage("tutorial") }, modifier = Modifier.fillMaxWidth()) { Text(strings(R.string.learn_with_a_guided_board)) }
+            Text(strings(R.string.reveal_every_safe_square_to_win_a_number_tells))
+            Text(strings(R.string.tap_to_reveal_hold_a_covered_square_to_flag))
+            Text(strings(R.string.tap_a_revealed_number_when_you_have_placed_the))
+            Text(strings(R.string.a_hold_flags_once_and_never_reveals_moving_into))
+            Text(strings(R.string.pinch_to_zoom_and_drag_to_explore_fit_board))
+            Text(strings(R.string.no_guess_preset_boards_are_verified_solvable_by_deduction))
+            Text(strings(R.string.your_game_saves_automatically_the_clock_pauses_while_menus))
+            Text(strings(R.string.optional_question_marks_are_available_in_settings_they_mark))
         }
         "tutorial" -> TutorialScreen(data?.preferences ?: Preferences(), resumed, onClose = ::closePage)
     }
     replacing?.let { request ->
-        AlertDialog(onDismissRequest = { replacing = null }, title = { Text("Replace current game?") },
-            text = { Text(if (request.dailyDate != null) "This archives your unfinished daily attempt as abandoned. It won't count as a normal loss." else "This replaces your unfinished regular or practice game. It won't count as a loss.") },
-            confirmButton = { TextButton(onClick = { launch(request); replacing = null }) { Text("Start new game") } },
-            dismissButton = { TextButton(onClick = { replacing = null; showGame() }) { Text("Keep playing") } })
+        AlertDialog(onDismissRequest = { replacing = null }, title = { Text(strings(R.string.replace_current_game)) },
+            text = { Text(if (request.dailyDate != null) strings(R.string.this_archives_your_unfinished_daily_attempt_as_abandoned_it) else strings(R.string.this_replaces_your_unfinished_regular_or_practice_game_it)) },
+            confirmButton = { TextButton(onClick = { launch(request); replacing = null }) { Text(strings(R.string.start_new_game)) } },
+            dismissButton = { TextButton(onClick = { replacing = null; showGame() }) { Text(strings(R.string.keep_playing)) } })
     }
     busy?.let { message ->
-        ProgressDialog(message, model::cancelCalculation)
+        ProgressDialog(strings.message(message), message.cancellable, model::cancelCalculation)
     }
     BackHandler(hint != null && !overlayPaused) { model.dismissHint() }
     hintMessage?.takeIf { hint == null }?.let { message ->
         val target = hint
         val columns = data?.activeGame?.config?.columns ?: 1
         AlertDialog(onDismissRequest = model::dismissHint,
-            title = { Text(target?.let { "${if (it.mine) "Mine" else "Safe square"} · row ${it.index / columns + 1}, column ${it.index % columns + 1}" } ?: "No deduction available") },
-            text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text(message) } },
+            title = { Text(target?.let { strings(R.string.row_column, if (it.mine) strings(R.string.mine) else strings(R.string.safe_square), it.index / columns + 1, it.index % columns + 1) } ?: strings(R.string.no_deduction_available)) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text(strings.message(message)) } },
             confirmButton = {
-                if (target != null) TextButton(onClick = model::applyHint) { Text(if (target.mine) "Flag square" else "Reveal square") }
-                else if (data?.activeGame?.status == GameStatus.READY) TextButton(onClick = model::useClassic) { Text("Use classic") }
-            }, dismissButton = { TextButton(onClick = model::dismissHint) { Text("Close") } })
+                if (target != null) TextButton(onClick = model::applyHint) { Text(if (target.mine) strings(R.string.flag_square) else strings(R.string.reveal_square)) }
+                else if (data?.activeGame?.status == GameStatus.READY) TextButton(onClick = model::useClassic) { Text(strings(R.string.use_classic)) }
+            }, dismissButton = { TextButton(onClick = model::dismissHint) { Text(strings(R.string.close)) } })
     }
     preview?.let { backup ->
-        AlertDialog(onDismissRequest = model::dismissPreview, title = { Text("Replace progress with backup?") },
+        AlertDialog(onDismissRequest = model::dismissPreview, title = { Text(strings(R.string.replace_progress_with_backup)) },
             text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("This replaces both saved games, settings, statistics, and history.")
-                Text("Backup date: ${backup.exportedAt?.let { DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm 'UTC'").withZone(ZoneOffset.UTC).format(Instant.parse(it)) } ?: "Legacy save; date unavailable"}")
-                Text("Regular game: ${backup.data.game?.config?.difficulty?.title ?: "None"}")
-                Text("Daily game: ${backup.data.dailyGame?.dailyDate ?: "None"}")
-                Text("${(backup.data.statistics.values + backup.data.noGuessStatistics.values).sumOf { it.wins }} wins · ${(backup.data.statistics.values + backup.data.noGuessStatistics.values).sumOf { it.losses }} losses · ${backup.data.dailyRecords.size} daily attempts")
-            } }, confirmButton = { TextButton(onClick = { model.confirmImport(); showGame() }) { Text("Replace progress") } },
-            dismissButton = { TextButton(onClick = model::dismissPreview) { Text("Cancel") } })
+                Text(strings(R.string.this_replaces_both_saved_games_settings_statistics_and_history))
+                Text(strings(R.string.backup_date, backup.exportedAt?.let { DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm 'UTC'", strings.locale).withZone(ZoneOffset.UTC).format(Instant.parse(it)) } ?: strings(R.string.legacy_save_date_unavailable)))
+                Text(strings(R.string.regular_game, backup.data.game?.config?.difficulty?.let(strings::difficulty) ?: strings(R.string.none)))
+                Text(strings(R.string.daily_game, backup.data.dailyGame?.dailyDate ?: strings(R.string.none)))
+                Text(strings.backupSummary((backup.data.statistics.values + backup.data.noGuessStatistics.values).sumOf { it.wins },
+                    (backup.data.statistics.values + backup.data.noGuessStatistics.values).sumOf { it.losses }, backup.data.dailyRecords.size))
+            } }, confirmButton = { TextButton(onClick = { model.confirmImport(); showGame() }) { Text(strings(R.string.replace_progress)) } },
+            dismissButton = { TextButton(onClick = model::dismissPreview) { Text(strings(R.string.cancel)) } })
     }
-    if (data?.recovered == true) AlertDialog(onDismissRequest = { model.dismissRecovery() }, title = { Text("Saved data reset") },
-        text = { Text("Your saved data could not be read. It has been reset so you can play again.") },
-        confirmButton = { TextButton(onClick = { model.dismissRecovery() }) { Text("Got it") } })
+    if (data?.recovered == true) AlertDialog(onDismissRequest = { model.dismissRecovery() }, title = { Text(strings(R.string.saved_data_reset)) },
+        text = { Text(strings(R.string.your_saved_data_could_not_be_read_it_has)) },
+        confirmButton = { TextButton(onClick = { model.dismissRecovery() }) { Text(strings(R.string.got_it)) } })
 }
 
 @Composable
 internal fun CustomBoard(onChoose: (BoardConfig) -> Unit, remembered: BoardConfig) {
+    val strings = textResources()
     var columns by rememberSaveable { mutableStateOf(remembered.columns.toString()) }
     var rows by rememberSaveable { mutableStateOf(remembered.rows.toString()) }
     var mines by rememberSaveable { mutableStateOf(remembered.mines.toString()) }
@@ -252,21 +255,22 @@ internal fun CustomBoard(onChoose: (BoardConfig) -> Unit, remembered: BoardConfi
     val config = BoardConfig(c, r, m)
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedTextField(columns, { columns = it.filter(Char::isDigit).take(2) }, label = { Text("Columns") }, modifier = Modifier.weight(1f), singleLine = true,
+            OutlinedTextField(columns, { columns = it.filter(Char::isDigit).take(2) }, label = { Text(strings(R.string.columns)) }, modifier = Modifier.weight(1f), singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = c !in 5..50)
-            OutlinedTextField(rows, { rows = it.filter(Char::isDigit).take(2) }, label = { Text("Rows") }, modifier = Modifier.weight(1f), singleLine = true,
+            OutlinedTextField(rows, { rows = it.filter(Char::isDigit).take(2) }, label = { Text(strings(R.string.rows)) }, modifier = Modifier.weight(1f), singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = r !in 5..50)
         }
-        OutlinedTextField(mines, { mines = it.filter(Char::isDigit).take(3) }, label = { Text("Mines") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+        OutlinedTextField(mines, { mines = it.filter(Char::isDigit).take(3) }, label = { Text(strings(R.string.mines)) }, modifier = Modifier.fillMaxWidth(), singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), isError = m !in 1..(c * r * 35 / 100))
-        Text(if (c in 5..50 && r in 5..50) "${c * r} squares · ${"%.1f".format(m * 100f / (c * r))}% mines\nChoose 1–${c * r * 35 / 100} mines." else "Choose 5–50 columns and 5–50 rows.", style = MaterialTheme.typography.bodySmall)
-        Button(onClick = { onChoose(config) }, enabled = config.isValid(), modifier = Modifier.fillMaxWidth()) { Text("Play custom board") }
+        Text(if (c in 5..50 && r in 5..50) strings(R.string.squares_mines_choose_1_mines, c * r, strings.format("%.1f", m * 100f / (c * r)), c * r * 35 / 100) else strings(R.string.choose_5_50_columns_and_5_50_rows), style = MaterialTheme.typography.bodySmall)
+        Button(onClick = { onChoose(config) }, enabled = config.isValid(), modifier = Modifier.fillMaxWidth()) { Text(strings(R.string.play_custom_board)) }
     }
 }
 
 @Composable
 private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: () -> Unit, onReplay: () -> Unit, onHome: () -> Unit, inputEnabled: Boolean, hint: Hint?, menu: @Composable () -> Unit, resultPresentation: ResultPresentation) {
     var hintAnswer by rememberSaveable(game.id, hint) { mutableStateOf(false) }
+    val strings = textResources()
     val feedback = LocalHapticFeedback.current
     val details = resultPresentation.open
     val result = data.results.find { it.id == game.id }
@@ -276,21 +280,21 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             if (game.finished) {
                 Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
-                    Text(if (game.status == GameStatus.WON) "You won" else "Game over", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text(if (largeText) formatTime(game.elapsedMillis) else "${game.config.difficulty.title} · ${formatTime(game.elapsedMillis)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if (game.status == GameStatus.WON) strings(R.string.you_won) else strings(R.string.game_over), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(if (largeText) strings.time(game.elapsedMillis) else strings(R.string.formatted_value, strings.difficulty(game.config.difficulty), strings.time(game.elapsedMillis)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                FilledTonalButton(onClick = resultPresentation.show, shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(horizontal = 12.dp)) { Text("View result", style = MaterialTheme.typography.labelMedium) }
+                FilledTonalButton(onClick = resultPresentation.show, shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(horizontal = 12.dp)) { Text(strings(R.string.view_result), style = MaterialTheme.typography.labelMedium) }
             } else {
-                Counter("Mines", (game.config.mines - game.flags).toString(), Modifier.weight(.8f).semantics { contentDescription = "Estimated mines remaining" })
+                Counter(strings(R.string.mines), (game.config.mines - game.flags).toString(), Modifier.weight(.8f).semantics { contentDescription = strings(R.string.estimated_mines_remaining) })
                 Spacer(Modifier.width(8.dp))
                 GameClock(game.elapsedMillis, Modifier.weight(1.2f).testTag("timer"))
                 Spacer(Modifier.width(8.dp))
                 if (largeText) {
-                    FilledTonalIconButton(onClick = onNew, modifier = Modifier.semantics { contentDescription = "New game" }) { Text("+", fontSize = 24.sp) }
+                    FilledTonalIconButton(onClick = onNew, modifier = Modifier.semantics { contentDescription = strings(R.string.new_game) }) { Text("+", fontSize = 24.sp) }
                 } else {
                     FilledTonalButton(onClick = onNew, contentPadding = PaddingValues(horizontal = 12.dp), shape = RoundedCornerShape(14.dp)) {
                         Text("+", fontSize = 20.sp, modifier = Modifier.padding(end = 6.dp))
-                        Text("New game", style = MaterialTheme.typography.labelMedium)
+                        Text(strings(R.string.new_game), style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -302,12 +306,12 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
             }
         }
         if (!game.finished && (game.mode != PlayMode.NORMAL || game.generation == GenerationMode.NO_GUESS)) {
-            Text(when (game.mode) { PlayMode.DAILY -> "Daily · ${game.dailyDate}"; PlayMode.PRACTICE -> "Practice · hints ${game.hintsUsed} · undos ${game.undosUsed} · mines hit ${game.minesHit}"; else -> "No-guess" },
+            Text(when (game.mode) { PlayMode.DAILY -> strings(R.string.daily, game.dailyDate); PlayMode.PRACTICE -> strings(R.string.practice_hints_undos_mines_hit, game.hintsUsed, game.undosUsed, game.minesHit); else -> strings(R.string.no_guess) },
                 modifier = Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.labelSmall)
         }
         if (game.mode == PlayMode.PRACTICE && !game.finished && hint == null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            TextButton(onClick = model::requestHint, enabled = inputEnabled && game.status == GameStatus.PLAYING) { Text("Hint") }
-            TextButton(onClick = model::undo, enabled = inputEnabled && game.undo.isNotEmpty()) { Text("Undo") }
+            TextButton(onClick = model::requestHint, enabled = inputEnabled && game.status == GameStatus.PLAYING) { Text(strings(R.string.hint)) }
+            TextButton(onClick = model::undo, enabled = inputEnabled && game.undo.isNotEmpty()) { Text(strings(R.string.undo)) }
         }
         key(game.id) {
             Board(game, onCell = { intent ->
@@ -327,8 +331,8 @@ private fun GameScreen(game: Game, model: GameViewModel, data: AppData, onNew: (
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             checkedContainerColor = MaterialTheme.colorScheme.primary,
                             checkedContentColor = MaterialTheme.colorScheme.onPrimary),
-                        modifier = Modifier.width(64.dp).semantics { contentDescription = "Flag mode" }) {
-                        Text("Flag", style = MaterialTheme.typography.labelMedium)
+                        modifier = Modifier.width(64.dp).semantics { contentDescription = strings(R.string.flag_mode) }) {
+                        Text(strings(R.string.flag), style = MaterialTheme.typography.labelMedium)
                     }
                 }
             })
@@ -353,18 +357,19 @@ private fun Counter(label: String, value: String, modifier: Modifier) {
 
 @Composable
 private fun InfoDialog(title: String, onClose: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val strings = textResources()
     AlertDialog(onDismissRequest = onClose, title = { Text(title, fontWeight = FontWeight.Bold) },
         text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp), content = content) },
-        confirmButton = { TextButton(onClick = onClose) { Text("Done") } })
+        confirmButton = { TextButton(onClick = onClose) { Text(strings(R.string.done)) } })
 }
 
 @Composable
-internal fun ProgressDialog(message: String, onCancel: () -> Unit) {
-    val canCancel = message.contains("no-guess") || message.contains("deduction")
+internal fun ProgressDialog(message: String, canCancel: Boolean, onCancel: () -> Unit) {
+    val strings = textResources()
     AlertDialog(onDismissRequest = { if (canCancel) onCancel() },
         properties = DialogProperties(dismissOnBackPress = canCancel, dismissOnClickOutside = false),
         title = { Text(message) }, text = { LinearProgressIndicator(Modifier.fillMaxWidth()) },
-        confirmButton = { if (canCancel) TextButton(onClick = onCancel) { Text("Cancel") } })
+        confirmButton = { if (canCancel) TextButton(onClick = onCancel) { Text(strings(R.string.cancel)) } })
 }
 
 private data class StartRequest(val config: BoardConfig? = null, val generation: GenerationMode = GenerationMode.CLASSIC,

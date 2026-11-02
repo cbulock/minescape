@@ -2,6 +2,8 @@ package com.cbulock.minescape.ui
 
 import android.content.ClipData
 import android.content.Context
+import android.content.res.Resources
+import com.cbulock.minescape.R
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -13,7 +15,6 @@ import androidx.core.content.FileProvider
 import androidx.core.graphics.createBitmap
 import com.cbulock.minescape.data.DailyOutcome
 import com.cbulock.minescape.data.DailyRecord
-import com.cbulock.minescape.game.formatTime
 import com.cbulock.minescape.game.ChallengeLink
 import java.io.File
 import java.time.LocalDate
@@ -28,12 +29,16 @@ object DailyShare {
     private fun date(record: DailyRecord, locale: Locale): String =
         LocalDate.parse(record.date).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
 
-    fun text(record: DailyRecord, locale: Locale = Locale.getDefault()): String {
+    fun text(record: DailyRecord, resources: Resources): String {
+        val strings = TextResources(resources)
         require(record.outcome == DailyOutcome.WON || record.outcome == DailyOutcome.LOST)
-        return "Minescape Daily · ${date(record, locale)}\n${if (record.outcome == DailyOutcome.WON) "Won" else "Lost"} · ${formatTime(record.elapsedMillis)}\nFirst attempt · Intermediate · No-guess\n\nPlay this puzzle:\n${ChallengeLink.daily(record.date)}\n\nGet Minescape on Google Play:\n$PLAY_STORE_URL"
+        return strings(R.string.share_text, strings(R.string.app_name), date(record, strings.locale),
+            strings(if (record.outcome == DailyOutcome.WON) R.string.won else R.string.lost),
+            strings.time(record.elapsedMillis), ChallengeLink.daily(record.date), PLAY_STORE_URL)
     }
-    fun card(record: DailyRecord, locale: Locale = Locale.getDefault()): Bitmap {
-        text(record, locale)
+    fun card(record: DailyRecord, resources: Resources): Bitmap {
+        val strings = TextResources(resources)
+        text(record, resources)
         val bitmap = createBitmap(1080, 720)
         val canvas = Canvas(bitmap)
         val ink = Color.rgb(40, 38, 64)
@@ -58,17 +63,32 @@ object DailyShare {
         }
         rect(32f, 40f, 1048f, 688f, 40f, Color.rgb(218, 212, 244))
         rect(32f, 32f, 1048f, 680f, 40f, Color.rgb(252, 251, 255))
-        line("Minescape", 80f, 123f, 44f, bold = true)
-        line("DAILY CHALLENGE", 80f, 195f, 24f, violet, true)
-        line(date(record, locale), 80f, 240f, 32f, muted)
+        line(strings(R.string.app_name), 80f, 123f, 44f, bold = true)
+        line(strings(R.string.share_daily_challenge), 80f, 195f, 24f, violet, true)
+        line(date(record, strings.locale), 80f, 240f, 32f, muted)
 
-        rect(80f, 292f, 300f, 350f, 29f, accent)
-        line(if (won) "You won" else "Game over", 104f, 331f, 30f, bold = true, maxWidth = 176f)
-        line(formatTime(record.elapsedMillis), 72f, 474f, 116f, bold = true, maxWidth = 550f)
-        line("First attempt", 80f, 520f, 28f, muted)
+        // Keep the outcome legible even when the receiving app omits the caption.
+        rect(80f, 278f, 1000f, 380f, 24f,
+            if (won) Color.rgb(28, 108, 81) else Color.rgb(167, 45, 60))
+        paint.color = Color.WHITE
+        paint.strokeWidth = 8f
+        paint.strokeCap = Paint.Cap.ROUND
+        if (won) {
+            canvas.drawLine(114f, 326f, 132f, 344f, paint)
+            canvas.drawLine(132f, 344f, 162f, 309f, paint)
+        } else {
+            canvas.drawLine(120f, 310f, 154f, 344f, paint)
+            canvas.drawLine(154f, 310f, 120f, 344f, paint)
+        }
+        line(strings(if (won) R.string.you_won else R.string.you_lost), 196f, 351f, 64f,
+            Color.WHITE, bold = true, maxWidth = 772f)
+        line(strings.time(record.elapsedMillis), 72f, 500f, 104f, bold = true, maxWidth = 550f)
+        line(strings(R.string.first_attempt), 80f, 544f, 28f, muted, maxWidth = 550f)
 
         // A fixed decorative motif, never a preview of the daily layout or player moves.
         canvas.save()
+        canvas.translate(405f, 264f)
+        canvas.scale(0.5f, 0.5f)
         canvas.rotate(-8f, 827f, 400f)
         for (row in 0..2) for (col in 0..2) {
             val x = 678f + col * 102f
@@ -90,27 +110,26 @@ object DailyShare {
         }
         canvas.restore()
         rect(80f, 572f, 1000f, 574f, 1f, Color.rgb(233, 230, 243))
-        line("Intermediate", 80f, 632f, 28f, bold = true)
-        line("16 × 16 / 40 mines", 330f, 632f, 26f, muted)
+        line(strings(R.string.difficulty_intermediate), 80f, 632f, 28f, bold = true, maxWidth = 220f)
+        line(strings(R.string.share_board), 330f, 632f, 26f, muted, maxWidth = 450f)
         rect(812f, 596f, 1000f, 648f, 26f, Color.rgb(234, 230, 255))
-        line("No-guess", 839f, 631f, 26f, violet, true)
+        line(strings(R.string.no_guess), 839f, 631f, 26f, violet, true, maxWidth = 134f)
         return bitmap
     }
     fun intent(context: Context, record: DailyRecord): Intent {
-        val locale = context.resources.configuration.locales[0] ?: Locale.getDefault()
         val folder = File(context.cacheDir, "daily-shares").apply { mkdirs() }
         // A new URI prevents receiving apps from reusing a previous card thumbnail.
         val file = File.createTempFile("minescape-daily-${record.date}-", ".png", folder)
-        val bitmap = card(record, locale)
+        val bitmap = card(record, context.resources)
         try { file.outputStream().use { check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) } }
         finally { bitmap.recycle() }
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", file)
         return Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_TEXT, text(record, locale))
+            putExtra(Intent.EXTRA_TEXT, text(record, context.resources))
             // The image type is already known; avoid an unnecessary provider query here.
-            clipData = ClipData.newRawUri("Daily result", uri)
+            clipData = ClipData.newRawUri(context.getString(R.string.daily_result), uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }

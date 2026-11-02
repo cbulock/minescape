@@ -19,14 +19,15 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cbulock.minescape.game.formatTime
+import com.cbulock.minescape.R
 
 @Composable
 internal fun GameClock(elapsedMillis: Long, modifier: Modifier = Modifier) {
-    val time = formatTime(elapsedMillis)
+    val strings = textResources()
+    val time = strings.time(elapsedMillis)
     val colors = MaterialTheme.colorScheme
     Surface(
-        modifier = modifier.clearAndSetSemantics { contentDescription = "Time $time" },
+        modifier = modifier.clearAndSetSemantics { contentDescription = strings(R.string.time_value, time) },
         shape = RoundedCornerShape(14.dp),
         color = colors.primaryContainer,
         contentColor = colors.onPrimaryContainer,

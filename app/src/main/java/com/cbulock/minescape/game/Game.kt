@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
 @Serializable
-enum class Difficulty(val title: String) { BEGINNER("Beginner"), INTERMEDIATE("Intermediate"), EXPERT("Expert"), CUSTOM("Custom") }
+enum class Difficulty { BEGINNER, INTERMEDIATE, EXPERT, CUSTOM }
 
 @Serializable
 data class BoardConfig(val columns: Int, val rows: Int, val mines: Int, val difficulty: Difficulty = Difficulty.CUSTOM) {

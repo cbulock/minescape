@@ -330,7 +330,7 @@ class ProgressBackTest {
 
     private fun checkBack(message: String, cancellable: Boolean) {
         var cancellations = 0
-        compose.setContent { MinescapeTheme(ThemeMode.LIGHT) { ProgressDialog(message) { cancellations++ } } }
+        compose.setContent { MinescapeTheme(ThemeMode.LIGHT) { ProgressDialog(message, cancellable) { cancellations++ } } }
         compose.waitForIdle()
         compose.runOnIdle { (ShadowDialog.getLatestDialog() as ComponentDialog).onBackPressedDispatcher.onBackPressed() }
         assertEquals(if (cancellable) 1 else 0, cancellations)
@@ -341,4 +341,6 @@ class ProgressBackTest {
     @Test fun backCancelsHintCalculation() = checkBack("Finding a deduction…", true)
     @Test fun backDoesNotInterruptBackupWrite() = checkBack("Exporting backup…", false)
     @Test fun backDoesNotInterruptBackupRead() = checkBack("Checking backup…", false)
+    @Test fun translatedMessageDoesNotControlCancellation() = checkBack("Calcul en cours…", true)
+    @Test fun incidentalEnglishWordsDoNotMakeBackupCancellable() = checkBack("Backup of a no-guess deduction", false)
 }

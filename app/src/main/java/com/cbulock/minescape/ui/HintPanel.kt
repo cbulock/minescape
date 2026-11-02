@@ -7,25 +7,26 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.cbulock.minescape.R
 import com.cbulock.minescape.game.Hint
 
 @Composable
 internal fun HintPanel(hint: Hint, answer: Boolean, onAnswer: () -> Unit, onApply: () -> Unit, onClose: () -> Unit) {
+    val strings = textResources()
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium) {
         Column(Modifier.fillMaxWidth().heightIn(max = 210.dp).verticalScroll(rememberScrollState()).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(if (answer) if (hint.mine) "This square is a mine" else "This square is safe" else "Look at the outlined squares",
+            Text(if (answer) if (hint.mine) strings(R.string.hint_square_mine) else strings(R.string.hint_square_safe) else strings(R.string.hint_look_outlined),
                 style = MaterialTheme.typography.titleSmall)
-            Text(if (answer) hint.explanation else if (hint.clueIndices.isEmpty())
-                "Use the total mine count to reason about the outlined covered squares." else
-                "Compare the outlined clues with the covered squares beside them. Can you find a certain move?",
+            Text(if (answer) strings.hint(hint) else if (hint.clueIndices.isEmpty())
+                strings(R.string.hint_total_guidance) else strings(R.string.hint_clue_guidance),
                 style = MaterialTheme.typography.bodySmall)
-            Text("Solid: clues · Dashed: covered squares${if (answer) " · Double outline: answer" else ""}",
+            Text(strings(R.string.hint_legend) + if (answer) strings(R.string.hint_legend_answer) else "",
                 style = MaterialTheme.typography.labelSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!answer) FilledTonalButton(onClick = onAnswer) { Text("Show answer") }
-                else FilledTonalButton(onClick = onApply) { Text(if (hint.mine) "Flag square" else "Reveal square") }
-                TextButton(onClick = onClose) { Text("Close hint") }
+                if (!answer) FilledTonalButton(onClick = onAnswer) { Text(strings(R.string.show_answer)) }
+                else FilledTonalButton(onClick = onApply) { Text(strings(if (hint.mine) R.string.flag_square else R.string.reveal_square)) }
+                TextButton(onClick = onClose) { Text(strings(R.string.close_hint)) }
             }
         }
     }
