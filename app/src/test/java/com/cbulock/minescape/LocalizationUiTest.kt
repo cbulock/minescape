@@ -152,6 +152,19 @@ class LocalizationUiTest {
         home("it-landscape-home")
     }
 
+    @Test @Config(qualifiers = "w320dp-h640dp-xhdpi")
+    fun europeanPortugueseLargeTextSettings() {
+        locale = Locale.forLanguageTag("pt-PT")
+        RuntimeEnvironment.setFontScale(2f)
+        settings("pt-pt-large-text-settings")
+    }
+
+    @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi")
+    fun europeanPortugueseLandscapeHome() {
+        locale = Locale.forLanguageTag("pt-PT")
+        home("pt-pt-landscape-home")
+    }
+
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi")
     fun rtlBoardTargetsStayAlignedWithTheCanvas() {
         locale = Locale.forLanguageTag("ar-XB")
@@ -186,7 +199,7 @@ class LocalizationUiTest {
             compose.onAllNodesWithContentDescription(DailyShare.text(record, context().resources)).fetchSemanticsNodes().isNotEmpty()
         }
         capture("expanded-open-share-preview")
-        for (tag in listOf("de-DE", "it-IT")) {
+        for (tag in listOf("de-DE", "it-IT", "pt-BR", "pt-PT")) {
             compose.runOnIdle { locale = Locale.forLanguageTag(tag) }
             compose.waitUntil(10000) {
                 compose.onAllNodesWithContentDescription(DailyShare.text(record, context().resources)).fetchSemanticsNodes().isNotEmpty()

@@ -1,0 +1,30 @@
+<en-US>
+Added Portuguese (Portugal), with translated menus, tutorials, hints, accessibility labels, and result sharing.
+</en-US>
+<es-ES>
+Añadido el portugués de Portugal, con menús, tutoriales, pistas, etiquetas de accesibilidad y resultados compartidos traducidos.
+</es-ES>
+<es-419>
+Se agregó el portugués de Portugal, con menús, tutoriales, pistas, etiquetas de accesibilidad y resultados compartidos traducidos.
+</es-419>
+<es-US>
+Se agregó el portugués de Portugal, con menús, tutoriales, pistas, etiquetas de accesibilidad y resultados compartidos traducidos.
+</es-US>
+<pt-BR>
+Minescape agora está disponível em português de Portugal, com menus, tutoriais, dicas, descrições de acessibilidade e compartilhamento de resultados traduzidos.
+</pt-BR>
+<pt-PT>
+O Minescape está agora disponível em português de Portugal, com menus, tutoriais, pistas, descrições de acessibilidade e partilha de resultados traduzidos.
+</pt-PT>
+<fr-FR>
+Ajout du portugais du Portugal, avec les menus, tutoriels, indices, libellés d’accessibilité et le partage des résultats traduits.
+</fr-FR>
+<fr-CA>
+Ajout du portugais du Portugal, avec les menus, tutoriels, indices, libellés d’accessibilité et le partage des résultats traduits.
+</fr-CA>
+<de-DE>
+Minescape unterstützt jetzt auch europäisches Portugiesisch (Portugal), mit übersetzten Menüs, Anleitungen, Tipps, Bedienungshilfen und geteilten Ergebnissen.
+</de-DE>
+<it-IT>
+Minescape ora è disponibile anche in portoghese europeo (Portogallo), con menu, tutorial, suggerimenti, descrizioni di accessibilità e condivisione dei risultati tradotti.
+</it-IT>

@@ -77,7 +77,7 @@ class DailyShareTest {
 
     @Test fun playStoreLinkIsIncludedForBothOutcomesAndAllLocales() {
         for (outcome in listOf(DailyOutcome.WON, DailyOutcome.LOST)) {
-            for (locale in listOf(Locale.US, Locale.GERMANY, Locale.ITALY, Locale.FRANCE, Locale.forLanguageTag("es"), Locale.forLanguageTag("pt-BR"), Locale.JAPAN)) {
+            for (locale in listOf(Locale.US, Locale.GERMANY, Locale.ITALY, Locale.FRANCE, Locale.forLanguageTag("es"), Locale.forLanguageTag("pt-BR"), Locale.forLanguageTag("pt-PT"), Locale.JAPAN)) {
                 val text = DailyShare.text(DailyRecord("2026-10-09", outcome, 87000), resources(locale))
                 assertTrue(text.endsWith("https://play.google.com/store/apps/details?id=com.cbulock.minescape"))
                 if (locale == Locale.US || locale == Locale.JAPAN) {
@@ -96,6 +96,8 @@ class DailyShareTest {
             Triple("french-lost", DailyOutcome.LOST, Locale.FRANCE),
             Triple("spanish-lost", DailyOutcome.LOST, Locale.forLanguageTag("es")),
             Triple("portuguese-won", DailyOutcome.WON, Locale.forLanguageTag("pt-BR")),
+            Triple("european-portuguese-won", DailyOutcome.WON, Locale.forLanguageTag("pt-PT")),
+            Triple("european-portuguese-lost", DailyOutcome.LOST, Locale.forLanguageTag("pt-PT")),
             Triple("german-won", DailyOutcome.WON, Locale.GERMANY),
             Triple("italian-lost", DailyOutcome.LOST, Locale.ITALY),
             Triple("japanese", DailyOutcome.WON, Locale.JAPAN),

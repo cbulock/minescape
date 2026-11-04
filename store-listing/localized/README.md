@@ -3,6 +3,8 @@
 These are review/upload materials. German and Italian descriptions and five phone
 screenshots per language were saved as Play Console drafts on 2026-11-04;
 earlier Spanish, Portuguese, and French listings were also entered as drafts.
+European Portuguese (`pt-PT`) text and five phone screenshots were also saved as
+a Play Console draft on 2026-11-04, separately from Brazilian Portuguese.
 Country availability remains managed separately. Translations are AI-authored and have not yet had
 independent fluent-speaker review. Review the tutorial, deduction terminology,
 and screenshots before publication.
@@ -11,6 +13,7 @@ and screenshots before publication.
 | --- | --- | --- |
 | `values-es` (neutral Spanish) | `es/store-listing.md` | Spanish (Spain), `es-ES`; Spanish (Latin America), `es-419`; Spanish (United States), `es-US` |
 | `values-pt-rBR` (Brazilian Portuguese) | `pt-BR/store-listing.md` | Portuguese (Brazil), `pt-BR` |
+| `values-pt-rPT` (European Portuguese) | `pt-PT/store-listing.md` | Portuguese (Portugal), `pt-PT` |
 | `values-fr` (neutral French) | `fr/store-listing.md` | French (France), `fr-FR`; French (Canada), `fr-CA` |
 | `values-de` (German) | `de/store-listing.md` | German, `de-DE` |
 | `values-it` (Italian) | `it/store-listing.md` | Italian, `it-IT` |
@@ -31,8 +34,9 @@ The output is `artifacts/localized-store-listings.zip`. Each Play locale contain
 UTF-8 `title.txt`, `short-description.txt`, and `full-description.txt`, plus five
 1080 × 1920 phone screenshots rendered from the actual localized app. The title
 remains Minescape. Text limits are checked at 30, 80, and 4000 characters.
-German and Italian packages also include `release-notes.txt` (500-character limit).
-The combined release-note block is in `release-notes-german-italian.txt`.
+German, Italian, and European Portuguese packages also include `release-notes.txt`
+(500-character limit). Combined release-note blocks are included as
+`release-notes-*.txt`; the newest is `release-notes-european-portuguese.txt`.
 Use `--text-only` to validate/package only the text before screenshot generation.
 
 The first three phone images show classic gameplay, dark-theme gameplay, and a

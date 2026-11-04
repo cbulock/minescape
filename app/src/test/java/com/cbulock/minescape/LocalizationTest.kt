@@ -60,6 +60,24 @@ class LocalizationTest {
         assertNotEquals("Preparing a no-guess board…", italian.message(message))
     }
 
+    @Test fun portugalAndBrazilResolveIndependentlyWithRegionalQuantities() {
+        val portugal = TextResources(resources(Locale.forLanguageTag("pt-PT")))
+        val brazil = TextResources(resources(Locale.forLanguageTag("pt-BR")))
+        val message = UiMessage.Resource(R.string.preparing_no_guess)
+        assertEquals("Definições", portugal(R.string.settings))
+        assertEquals("Configurações", brazil(R.string.settings))
+        assertEquals("Partilhar resultado", portugal(R.string.share_result))
+        assertEquals("Compartilhar resultado", brazil(R.string.share_result))
+        for (count in listOf(0, 1, 2)) {
+            assertEquals("$count ${if (count == 1) "pista usada" else "pistas usadas"}", portugal.quantity(R.plurals.hints_used, count, count))
+            assertEquals("$count ${if (count == 1) "jogada anulada" else "jogadas anuladas"}", portugal.quantity(R.plurals.undos_used, count, count))
+            assertEquals("Dicas: $count", brazil.quantity(R.plurals.hints_used, count, count))
+        }
+        assertEquals("Casa segura · linha 3, coluna 7", portugal(R.string.row_column, portugal(R.string.safe_square), 3, 7))
+        assertEquals("Linha 3, coluna 7", portugal(R.string.cell_position, 3, 7))
+        assertNotEquals(portugal.message(message), brazil.message(message))
+    }
+
     @Test fun hintsKeepStructuredEvidenceAndBoundedComparisonText() {
         val strings = TextResources(resources(Locale.US))
         val clue = HintReason.Clue(2, 3, 1)

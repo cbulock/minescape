@@ -2,7 +2,7 @@
 
 Player-facing copy lives in Android resources. The unqualified
 `app/src/main/res/values/strings.xml` remains the complete English fallback.
-Spanish, Brazilian Portuguese, French, German, and Italian are available alongside it;
+Spanish, Brazilian Portuguese, European Portuguese, French, German, and Italian are available alongside it;
 their presence in this checkout does not mean a translated build has been published.
 
 | Language | Resource folder | Intended wording |
@@ -10,20 +10,24 @@ their presence in this checkout does not mean a translated build has been publis
 | English | `values` | Existing English fallback |
 | Spanish | `values-es` | Neutral Spanish, including Spain and Latin America |
 | Portuguese | `values-pt-rBR` | Brazilian Portuguese |
+| Portuguese (Portugal) | `values-pt-rPT` | European Portuguese, kept separate from Brazil |
 | French | `values-fr` | Neutral French for France and Canada |
 | German | `values-de` | German for Germany, Austria, and Switzerland |
 | Italian | `values-it` | Italian for Italy and Switzerland |
 
 Android selects the matching language from the device configuration. On Android
-13 and later, `locales_config.xml` exposes all six languages in Android's
+13 and later, `locales_config.xml` exposes all seven language variants in Android's
 per-app language settings. There is no custom in-app language picker. Earlier
 Android versions continue to use device language selection.
 
-All five translated catalogs cover 245 strings and 12 quantity resources. They must cover every current translatable string and quantity
+All six translated catalogs cover 245 strings and 12 quantity resources. They must cover every current translatable string and quantity
 resource, including shared-board links and hint overlays. The Minescape brand is inherited unchanged. German uses `one` and `other`; Italian uses `one`, `many`, and `other`. Spanish, Portuguese, and
-French quantity resources include `one`, `many`, and `other`; Portuguese uses
+French quantity resources include `one`, `many`, and `other`; Brazilian Portuguese uses
 label-and-number wording where its zero/one category would otherwise produce
 awkward counts. Compound history summaries also use label-and-number wording.
+European Portuguese has its own `one`, `many`, and `other` quantities: zero uses
+plural wording, while one uses singular wording. Android resolves `pt-PT` and
+`pt-BR` independently, including when switching between the two on an open screen.
 
 Translations are AI-authored, with independent source review and automated
 checks; review by fluent speakers remains pending. In particular, review the
@@ -126,3 +130,25 @@ their five localized screenshots were saved and reloaded in Play Console as draf
 nothing was submitted for review or published. Python was unavailable locally, so
 the package was assembled with an equivalent temporary PowerShell helper, with
 field limits, PNG headers, and archive contents validated separately.
+
+European Portuguese verification on 2026-11-04: the full run executed 253 tests,
+with 251 passing, one Android-only provider test skipped, and one existing
+`DailyShareTest.dailyHistoryShowsTheSamePreview` failure caused by re-entrant
+Compose test layout (`performMeasureAndLayout called during measure layout`).
+The serial sharing/localization rerun passed all 16 tests, including that case,
+without changes to production code. Final lint reported zero errors and 11
+warnings; both debug APK builds passed with the final reviewed resources.
+Portugal/Brazil selection, zero/one/multiple quantities, accessibility coordinates,
+pending messages and switching an open share preview between both variants are
+covered. Portrait store screenshots, 200% text settings, landscape home, and share
+cards were inspected. No device or emulator was connected; physical TalkBack and
+receiving-app/share-sheet checks remain pending. Fluent-speaker review remains
+pending after independent AI review and automated catalog checks.
+
+The package contains nine translated Play profiles, 45 opaque 1080 × 1920 RGB
+phone PNGs, and release notes in all ten listing locales. The Portugal description
+and five ordered screenshots were saved and reloaded in Play Console as a draft.
+Brazilian Portuguese resources were retained. Country availability, gameplay,
+save schemas and puzzle identities were unchanged; nothing was published.
+Packaging used the equivalent temporary PowerShell helper
+because Python remains unavailable on this workstation.
