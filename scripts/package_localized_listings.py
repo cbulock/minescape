@@ -16,7 +16,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PROFILES = {"es-ES": "es", "es-419": "es", "pt-BR": "pt-BR", "fr-FR": "fr", "fr-CA": "fr"}
+PROFILES = {"es-ES": "es", "es-419": "es", "es-US": "es", "pt-BR": "pt-BR", "fr-FR": "fr", "fr-CA": "fr", "de-DE": "de", "it-IT": "it"}
 SCREENSHOT_NAMES = (
     "01-classic-gameplay.png", "02-dark-theme-gameplay.png", "03-winning-result.png",
     "04-choose-your-board.png", "05-learn-to-play.png",
@@ -37,6 +37,11 @@ def listing_fields(path: Path) -> dict[str, str]:
             raise ValueError(f"{path}: {name} has {len(fields[name])} characters; limit {limit}")
     if fields["title"] != "Minescape":
         raise ValueError(f"{path}: keep the Minescape brand unchanged")
+    notes = path.with_name("release-notes.txt")
+    if notes.is_file():
+        fields["release-notes"] = notes.read_text(encoding="utf-8").strip()
+        if not 1 <= len(fields["release-notes"]) <= 500:
+            raise ValueError(f"{notes}: release notes must contain 1–500 characters")
     return fields
 
 
@@ -77,11 +82,13 @@ def main() -> None:
                 shutil.copy2(path, images / path.name)
     instructions = (ROOT / "store-listing/localized/README.md").read_text(encoding="utf-8")
     (output / "README.md").write_text(instructions, encoding="utf-8", newline="\n")
+    notes_name = "release-notes-german-italian.txt"
+    shutil.copy2(ROOT / "store-listing/localized" / notes_name, output / notes_name)
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     archive = output.with_suffix(".zip")
     # Explicit file list avoids carrying stale or unreviewed files into an upload package.
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
-        for name in ("README.md", "manifest.json"):
+        for name in ("README.md", "manifest.json", notes_name):
             bundle.write(output / name, name)
         for play_locale in PROFILES:
             for field in source[PROFILES[play_locale]]:

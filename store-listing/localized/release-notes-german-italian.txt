@@ -1,0 +1,27 @@
+<en-US>
+Minescape now supports German and Italian, including menus, tutorials, hints, accessibility labels, and result sharing.
+</en-US>
+<es-ES>
+Minescape ahora está disponible en alemán e italiano, incluidos los menús, tutoriales, pistas, etiquetas de accesibilidad y resultados compartidos.
+</es-ES>
+<es-419>
+Minescape ahora está disponible en alemán e italiano, incluidos los menús, tutoriales, pistas, etiquetas de accesibilidad y resultados compartidos.
+</es-419>
+<es-US>
+Minescape ahora está disponible en alemán e italiano, incluidos los menús, tutoriales, pistas, etiquetas de accesibilidad y resultados compartidos.
+</es-US>
+<pt-BR>
+Minescape agora está disponível em alemão e italiano, incluindo menus, tutoriais, dicas, descrições de acessibilidade e compartilhamento de resultados.
+</pt-BR>
+<fr-FR>
+Minescape est désormais disponible en allemand et en italien, avec les menus, tutoriels, indices, libellés d’accessibilité et le partage des résultats traduits.
+</fr-FR>
+<fr-CA>
+Minescape est désormais disponible en allemand et en italien, avec les menus, tutoriels, indices, libellés d’accessibilité et le partage des résultats traduits.
+</fr-CA>
+<de-DE>
+Minescape ist jetzt auch auf Deutsch und Italienisch verfügbar – mit übersetzten Menüs, Anleitungen, Tipps, Bedienungshilfen und geteilten Ergebnissen.
+</de-DE>
+<it-IT>
+Minescape ora è disponibile anche in tedesco e italiano, con menu, tutorial, suggerimenti, descrizioni di accessibilità e condivisione dei risultati tradotti.
+</it-IT>

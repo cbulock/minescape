@@ -43,6 +43,23 @@ class LocalizationTest {
         assertEquals(english, TextResources(resources(Locale.JAPAN)).message(message))
     }
 
+    @Test fun germanAndItalianQuantitiesCoordinatesAndPendingMessages() {
+        val message = UiMessage.Resource(R.string.preparing_no_guess)
+        val german = TextResources(resources(Locale.GERMANY))
+        val italian = TextResources(resources(Locale.ITALY))
+        for (count in listOf(0, 1, 2)) {
+            assertEquals("$count ${if (count == 1) "Tipp" else "Tipps"}", german.quantity(R.plurals.hints_used, count, count))
+            assertEquals("$count ${if (count == 1) "Zug" else "Züge"} rückgängig", german.quantity(R.plurals.undos_used, count, count))
+            assertEquals("$count ${if (count == 1) "suggerimento" else "suggerimenti"}", italian.quantity(R.plurals.hints_used, count, count))
+            assertEquals("$count ${if (count == 1) "annullamento" else "annullamenti"}", italian.quantity(R.plurals.undos_used, count, count))
+        }
+        assertEquals("Zeile 3, Spalte 7", german(R.string.cell_position, 3, 7))
+        assertEquals("Riga 3, colonna 7", italian(R.string.cell_position, 3, 7))
+        assertNotEquals(german.message(message), italian.message(message))
+        assertNotEquals("Preparing a no-guess board…", german.message(message))
+        assertNotEquals("Preparing a no-guess board…", italian.message(message))
+    }
+
     @Test fun hintsKeepStructuredEvidenceAndBoundedComparisonText() {
         val strings = TextResources(resources(Locale.US))
         val clue = HintReason.Clue(2, 3, 1)

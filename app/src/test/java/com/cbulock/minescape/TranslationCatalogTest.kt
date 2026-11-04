@@ -17,7 +17,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 @RunWith(RobolectricTestRunner::class)
 class TranslationCatalogTest {
-    private val locales = mapOf("es" to "values-es", "pt-BR" to "values-pt-rBR", "fr" to "values-fr")
+    private val locales = mapOf("es" to "values-es", "pt-BR" to "values-pt-rBR", "fr" to "values-fr", "de" to "values-de", "it" to "values-it")
     private fun document(file: File) = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
     private fun elements(file: File): List<Element> {
         val children = document(file).documentElement.childNodes
@@ -58,13 +58,16 @@ class TranslationCatalogTest {
 
     @Test fun regionalLocalesResolveTranslatedScreensHintsAndShares() {
         val app = ApplicationProvider.getApplicationContext<MinescapeApplication>()
-        for (tag in listOf("es-ES", "es-MX", "pt-BR", "fr-FR", "fr-CA")) {
+        for (tag in listOf("es-ES", "es-MX", "pt-BR", "fr-FR", "fr-CA", "de-DE", "de-AT", "de-CH", "it-IT", "it-CH")) {
             val locale = Locale.forLanguageTag(tag)
             val resources = app.createConfigurationContext(Configuration(app.resources.configuration).apply { setLocale(locale) }).resources
             val strings = TextResources(resources)
             assertNotEquals(tag, "Choose your board", strings(R.string.choose_your_board))
             assertNotEquals(tag, "Preparing a no-guess board…", strings.message(UiMessage.Resource(R.string.preparing_no_guess)))
             assertEquals("Minescape", strings(R.string.app_name))
+            val position = strings(R.string.row_column, strings(R.string.safe_square), "2", "3")
+            assertTrue(position.contains("2") && position.contains("3"))
+            assertFalse("English accessibility label in $tag", position.contains("row"))
             for (count in listOf(0, 1, 2, 1_000_000)) {
                 for (id in listOf(R.plurals.hints_used, R.plurals.undos_used, R.plurals.mines_hit, R.plurals.adjacent_mines)) {
                     val value = strings.quantity(id, count, count)
@@ -87,7 +90,7 @@ class TranslationCatalogTest {
         assertTrue("Missing system language metadata", file.isFile)
         val names = document(file).getElementsByTagName("locale")
         val tags = (0 until names.length).map { (names.item(it) as Element).getAttribute("android:name") }.toSet()
-        assertEquals(setOf("en", "es", "pt-BR", "fr"), tags)
+        assertEquals(setOf("en", "es", "pt-BR", "fr", "de", "it"), tags)
         assertTrue(File("src/main/AndroidManifest.xml").readText().contains("android:localeConfig=\"@xml/locales_config\""))
     }
 

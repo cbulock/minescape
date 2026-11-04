@@ -195,11 +195,18 @@ class FeatureFlowTest {
             compose.onNodeWithText("Beginner").performScrollTo().performClick()
             waitFor { saved().game?.generation == GenerationMode.NO_GUESS }
             compose.onNodeWithTag("cell-40").performClick()
-            waitFor { saved().game?.status != GameStatus.READY && model.busy.value == null }
-            assertTrue(LogicSolver.solves(saved().game!!))
-            val g = saved().game!!
+            // Repository persistence can finish before the ViewModel collector sees
+            // the generated cells. Send the next intent against the displayed game.
+            waitFor {
+                val persisted = saved().game
+                val displayed = model.data.value?.game
+                persisted != null && persisted.status != GameStatus.READY && model.busy.value == null &&
+                    displayed != null && displayed.id == persisted.id && displayed.status == persisted.status && displayed.cells == persisted.cells
+            }
+            val g = model.data.value!!.game!!
+            assertTrue(LogicSolver.solves(g))
             if (!g.finished) {
-                model.cell(CellIntent(g.id, g.cells.indexOfFirst { it.mine }, CellAction.REVEAL, false))
+                model.cell(CellIntent(g.id, g.cells.indexOfFirst { it.mine }, CellAction.REVEAL, g.flagMode))
                 waitFor { saved().noGuessStatistics[Difficulty.BEGINNER]?.losses == 1 }
             } else assertEquals(1, saved().noGuessStatistics[Difficulty.BEGINNER]?.wins)
             assertTrue(saved().statistics.isEmpty())

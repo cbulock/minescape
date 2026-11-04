@@ -2,7 +2,7 @@
 
 Player-facing copy lives in Android resources. The unqualified
 `app/src/main/res/values/strings.xml` remains the complete English fallback.
-Spanish, Brazilian Portuguese, and French are prepared locally alongside it;
+Spanish, Brazilian Portuguese, French, German, and Italian are available alongside it;
 their presence in this checkout does not mean a translated build has been published.
 
 | Language | Resource folder | Intended wording |
@@ -11,14 +11,16 @@ their presence in this checkout does not mean a translated build has been publis
 | Spanish | `values-es` | Neutral Spanish, including Spain and Latin America |
 | Portuguese | `values-pt-rBR` | Brazilian Portuguese |
 | French | `values-fr` | Neutral French for France and Canada |
+| German | `values-de` | German for Germany, Austria, and Switzerland |
+| Italian | `values-it` | Italian for Italy and Switzerland |
 
 Android selects the matching language from the device configuration. On Android
-13 and later, `locales_config.xml` also exposes these four languages in Android's
+13 and later, `locales_config.xml` exposes all six languages in Android's
 per-app language settings. There is no custom in-app language picker. Earlier
 Android versions continue to use device language selection.
 
-All three translated catalogs cover the 225 translatable strings and 12 quantity
-resources. The Minescape brand is inherited unchanged. Spanish, Portuguese, and
+All five translated catalogs cover 245 strings and 12 quantity resources. They must cover every current translatable string and quantity
+resource, including shared-board links and hint overlays. The Minescape brand is inherited unchanged. German uses `one` and `other`; Italian uses `one`, `many`, and `other`. Spanish, Portuguese, and
 French quantity resources include `one`, `many`, and `other`; Portuguese uses
 label-and-number wording where its zero/one category would otherwise produce
 awkward counts. Compound history summaries also use label-and-number wording.
@@ -104,3 +106,23 @@ Final lint has zero errors and ten warnings; the additional warning is the
 intentional Android 13+ `localeConfig` attribute on an app that also supports
 older Android versions. The generated listing ZIP contains five Play locale
 variants, each with validated text and five opaque 1080 × 1920 RGB phone PNGs.
+
+German/Italian verification on 2026-11-04: the full suite passed 248 tests with
+one Android-only provider test skipped. Lint reported zero errors and 11 warnings;
+both debug APK builds passed. An existing generation-flow test was stabilized to
+wait until persisted and displayed game state agree before sending its next move;
+its final focused rerun and Android test APK build passed. English share assertions
+remain for English and unsupported Japanese; German now checks translated text.
+German/Italian zero/one/multiple quantities, regional locale resolution, formatted
+accessibility positions, hint resources, pending messages, and open share previews
+are covered. Phone, landscape, large-text and daily-share renders were inspected.
+There was no connected emulator or device, so physical TalkBack/share-sheet checks
+remain pending. No gameplay, save schema, puzzle data, or country settings changed.
+
+The upload ZIP now contains eight translated Play profiles (including the existing
+Spanish US variant), 40 validated phone PNGs, German/Italian release notes, and a
+combined note block for all nine listing languages. Both new descriptions and
+their five localized screenshots were saved and reloaded in Play Console as drafts;
+nothing was submitted for review or published. Python was unavailable locally, so
+the package was assembled with an equivalent temporary PowerShell helper, with
+field limits, PNG headers, and archive contents validated separately.

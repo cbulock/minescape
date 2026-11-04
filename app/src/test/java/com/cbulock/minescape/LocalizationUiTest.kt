@@ -126,6 +126,32 @@ class LocalizationUiTest {
         home("es-mx-large-text-home")
     }
 
+    @Test @Config(qualifiers = "w320dp-h640dp-xhdpi")
+    fun germanLargeTextHome() {
+        locale = Locale.GERMANY
+        RuntimeEnvironment.setFontScale(2f)
+        home("de-large-text-home")
+    }
+
+    @Test @Config(qualifiers = "w320dp-h640dp-xhdpi")
+    fun italianLargeTextSettings() {
+        locale = Locale.ITALY
+        RuntimeEnvironment.setFontScale(2f)
+        settings("it-large-text-settings")
+    }
+
+    @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi")
+    fun germanLandscapeSettings() {
+        locale = Locale.GERMANY
+        settings("de-landscape-settings")
+    }
+
+    @Test @Config(qualifiers = "w640dp-h360dp-land-xhdpi")
+    fun italianLandscapeHome() {
+        locale = Locale.ITALY
+        home("it-landscape-home")
+    }
+
     @Test @Config(qualifiers = "w360dp-h640dp-xhdpi")
     fun rtlBoardTargetsStayAlignedWithTheCanvas() {
         locale = Locale.forLanguageTag("ar-XB")
@@ -160,6 +186,14 @@ class LocalizationUiTest {
             compose.onAllNodesWithContentDescription(DailyShare.text(record, context().resources)).fetchSemanticsNodes().isNotEmpty()
         }
         capture("expanded-open-share-preview")
+        for (tag in listOf("de-DE", "it-IT")) {
+            compose.runOnIdle { locale = Locale.forLanguageTag(tag) }
+            compose.waitUntil(10000) {
+                compose.onAllNodesWithContentDescription(DailyShare.text(record, context().resources)).fetchSemanticsNodes().isNotEmpty()
+            }
+            compose.onNodeWithText(label(R.string.preparing_no_guess)).assertExists()
+            capture("$tag-open-share-preview")
+        }
         compose.onNodeWithText(label(R.string.close)).performClick()
         compose.onNodeWithText(label(R.string.preparing_no_guess)).assertExists()
     }

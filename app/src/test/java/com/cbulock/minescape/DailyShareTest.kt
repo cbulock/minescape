@@ -69,7 +69,7 @@ class DailyShareTest {
                 TimeZone.setDefault(TimeZone.getTimeZone(zone))
                 assertEquals("Minescape Daily · Oct 9, 2026\nWon · 01:27\nFirst attempt · Intermediate · No-guess\n\nPlay this puzzle:\nhttps://cbulock.github.io/minescape/play/#d1.2026-10-09\n\nGet Minescape on Google Play:\nhttps://play.google.com/store/apps/details?id=com.cbulock.minescape",
                     DailyShare.text(record, resources(Locale.US)))
-                assertTrue(DailyShare.text(record, resources(Locale.GERMANY)).startsWith("Minescape Daily · 09.10.2026\n"))
+                assertTrue(DailyShare.text(record, resources(Locale.GERMANY)).startsWith("Minescape Tagesspiel · 09.10.2026\n"))
                 assertFalse(DailyShare.text(record, resources(Locale.JAPAN)).contains("UTC"))
             }
         } finally { TimeZone.setDefault(originalZone) }
@@ -77,9 +77,12 @@ class DailyShareTest {
 
     @Test fun playStoreLinkIsIncludedForBothOutcomesAndAllLocales() {
         for (outcome in listOf(DailyOutcome.WON, DailyOutcome.LOST)) {
-            for (locale in listOf(Locale.US, Locale.GERMANY, Locale.JAPAN)) {
+            for (locale in listOf(Locale.US, Locale.GERMANY, Locale.ITALY, Locale.FRANCE, Locale.forLanguageTag("es"), Locale.forLanguageTag("pt-BR"), Locale.JAPAN)) {
                 val text = DailyShare.text(DailyRecord("2026-10-09", outcome, 87000), resources(locale))
-                assertTrue(text.endsWith("\n\nGet Minescape on Google Play:\nhttps://play.google.com/store/apps/details?id=com.cbulock.minescape"))
+                assertTrue(text.endsWith("https://play.google.com/store/apps/details?id=com.cbulock.minescape"))
+                if (locale == Locale.US || locale == Locale.JAPAN) {
+                    assertTrue(text.endsWith("\n\nGet Minescape on Google Play:\nhttps://play.google.com/store/apps/details?id=com.cbulock.minescape"))
+                }
             }
         }
     }
@@ -93,6 +96,8 @@ class DailyShareTest {
             Triple("french-lost", DailyOutcome.LOST, Locale.FRANCE),
             Triple("spanish-lost", DailyOutcome.LOST, Locale.forLanguageTag("es")),
             Triple("portuguese-won", DailyOutcome.WON, Locale.forLanguageTag("pt-BR")),
+            Triple("german-won", DailyOutcome.WON, Locale.GERMANY),
+            Triple("italian-lost", DailyOutcome.LOST, Locale.ITALY),
             Triple("japanese", DailyOutcome.WON, Locale.JAPAN),
         )) {
             val bitmap = DailyShare.card(DailyRecord("2026-10-09", outcome, 87000), resources(locale))

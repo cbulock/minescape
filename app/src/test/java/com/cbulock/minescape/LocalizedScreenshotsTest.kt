@@ -104,4 +104,6 @@ class LocalizedScreenshotsTest {
     @Test @Config(qualifiers = "es-rES-w360dp-h640dp-xxhdpi") fun spanish() = render("es")
     @Test @Config(qualifiers = "pt-rBR-w360dp-h640dp-xxhdpi") fun brazilianPortuguese() = render("pt-BR")
     @Test @Config(qualifiers = "fr-rFR-w360dp-h640dp-xxhdpi") fun french() = render("fr")
+    @Test @Config(qualifiers = "de-rDE-w360dp-h640dp-xxhdpi") fun german() = render("de")
+    @Test @Config(qualifiers = "it-rIT-w360dp-h640dp-xxhdpi") fun italian() = render("it")
 }
